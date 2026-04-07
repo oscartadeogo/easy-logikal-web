@@ -309,6 +309,53 @@
             gap: 1rem;
             align-items: center;
         }
+
+        /* Modal Tabs Styles */
+        .modal-tabs {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            overflow-x: auto;
+        }
+        .modal-tab-btn {
+            background: none;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .modal-tab-btn.active {
+            color: var(--primary);
+        }
+        .modal-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -0.5rem;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .modal-content {
+            max-width: 800px;
+        }
     </style>
     
     <!-- Supabase SDK -->
@@ -638,62 +685,56 @@
         </div>
     </main>
 
-    <!-- Modal for Add/Edit -->
+    <!-- Modal for Products -->
     <div class="modal" id="product-modal">
         <div class="modal-content">
             <span class="close-modal-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modal-title">Agregar Producto</h2>
-            <form id="product-form">
+            <h2 id="modal-title">Nuevo Producto</h2>
+            
+            <form id="product-form" class="mt-2">
                 <input type="hidden" id="edit-id">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                
+                <!-- Modal Tabs -->
+                <div class="modal-tabs">
+                    <button type="button" class="modal-tab-btn active" data-tab="tab-general">Información Básica</button>
+                    <button type="button" class="modal-tab-btn" data-tab="tab-inventory">Precios e Inventario</button>
+                    <button type="button" class="modal-tab-btn" data-tab="tab-description">Descripción</button>
+                    <button type="button" class="modal-tab-btn" data-tab="tab-images">Imágenes y Variantes</button>
+                </div>
+
+                <!-- Tab Content: General -->
+                <div class="tab-content active" id="tab-general">
                     <div class="form-group">
                         <label>Nombre del Producto</label>
-                        <input type="text" id="p-name" required>
+                        <input type="text" id="p-name" required placeholder="Ej: Juguete de colección">
                     </div>
-                    <div class="form-group">
-                        <label>Categoría</label>
-                        <select id="p-category" required>
-                            <option value="juguetes">Juguetes y Coleccionables</option>
-                            <option value="muebles">Muebles de Exterior</option>
-                            <option value="hogar">Hogar y Oficina</option>
-                            <option value="logistica">Logística Industrial</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Categoría</label>
+                            <select id="p-category">
+                                <option value="juguetes">Juguetes y Coleccionables</option>
+                                <option value="muebles">Muebles de Exterior</option>
+                                <option value="hogar">Hogar y Oficina</option>
+                                <option value="logistica">Logística Industrial</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Marca</label>
+                            <input type="text" id="p-brand" placeholder="Ej: Mattel">
+                        </div>
                     </div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label>Precio ($)</label>
-                        <input type="number" id="p-price" step="0.01" required>
-                    </div>
-                    <div class="form-group">
-                        <label>SKU</label>
-                        <input type="text" id="p-sku" placeholder="Ej. 18-38202">
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label>Marca</label>
-                        <input type="text" id="p-brand" placeholder="Ej. Bburago">
-                    </div>
-                    <div class="form-group">
-                        <label>Stock Inicial</label>
-                        <input type="number" id="p-stock" value="110" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Descripción del Producto</label>
-                    <textarea id="p-desc" rows="6" placeholder="Escribe aquí los detalles técnicos y comerciales del producto..."></textarea>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group">
-                        <label>Estado</label>
-                        <select id="p-status">
-                            <option value="active">Activo / Visible</option>
-                            <option value="paused">Pausado / Oculto</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>SKU (Código Interno)</label>
+                            <input type="text" id="p-sku" placeholder="EJ: ELK-001">
+                        </div>
+                        <div class="form-group">
+                            <label>Estado Inicial</label>
+                            <select id="p-status">
+                                <option value="active">Activo / Visible</option>
+                                <option value="paused">Pausado / Borrador</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Etiquetas (Separadas por coma)</label>
@@ -701,31 +742,73 @@
                     </div>
                 </div>
 
-                <div class="form-group" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h4 style="margin:0; font-size: 0.9rem;">Variantes (Color, Fotos, Stock)</h4>
-                        <button type="button" class="btn" style="background: var(--secondary); color: white; padding: 4px 10px; font-size: 0.8rem;" onclick="addNewVariant()">+ Agregar Color</button>
+                <!-- Tab Content: Inventory -->
+                <div class="tab-content" id="tab-inventory">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Precio Unitario ($)</label>
+                            <input type="number" id="p-price" step="0.01" required placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Stock Disponible</label>
+                            <input type="number" id="p-stock" required placeholder="0">
+                        </div>
                     </div>
-                    <div id="variants-editor-container" style="display: flex; flex-direction: column; gap: 0.8rem;">
-                        <!-- Variants will be added here -->
+                    <div class="form-group" style="background: #E3F2FD; padding: 1rem; border-radius: 6px;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="p-free-shipping" style="width: auto;">
+                            <strong>Ofrecer Envío Gratis</strong>
+                        </label>
+                        <small style="color: #666; margin-left: 1.5rem;">Activa esta opción para incentivar la compra.</small>
+                    </div>
+                    <div class="form-group mt-1">
+                        <label>Badge Especial (Opcional)</label>
+                        <select id="p-badge">
+                            <option value="">Ninguno</option>
+                            <option value="Nuevo">Nuevo</option>
+                            <option value="Oferta">Oferta</option>
+                            <option value="Más Vendido">Más Vendido</option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>URL Imagen Principal</label>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <input type="text" id="p-image" placeholder="https://..." style="flex: 1;">
-                        <input type="file" id="p-file-main" accept="image/*" style="display: none;" onchange="handleImageProcessing(this, 'p-image')">
-                        <button type="button" class="btn" style="background: #666; color: white;" onclick="document.getElementById('p-file-main').click()">Subir</button>
+                <!-- Tab Content: Description -->
+                <div class="tab-content" id="tab-description">
+                    <div class="form-group">
+                        <label>Descripción del Producto (Soporta HTML)</label>
+                        <textarea id="p-desc" rows="12" placeholder="Escribe aquí las especificaciones, materiales, y detalles técnicos..."></textarea>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Galería General (URLs separadas por coma)</label>
-                    <textarea id="p-gallery" rows="2" placeholder="url1, url2, url3"></textarea>
+
+                <!-- Tab Content: Images & Variants -->
+                <div class="tab-content" id="tab-images">
+                    <div class="form-group">
+                        <label>Imagen Principal</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="text" id="p-image" placeholder="https://..." style="flex: 1;">
+                            <input type="file" id="p-file-main" accept="image/*" style="display: none;" onchange="handleImageProcessing(this, 'p-image')">
+                            <button type="button" class="btn" style="background: #666; color: white;" onclick="document.getElementById('p-file-main').click()">Subir</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Galería (URLs separadas por coma)</label>
+                        <textarea id="p-gallery" rows="2" placeholder="url1, url2, url3"></textarea>
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h4 style="margin:0; font-size: 0.9rem;">Variantes por Color (Opcional)</h4>
+                            <button type="button" class="btn" style="background: var(--secondary); color: white; padding: 4px 10px; font-size: 0.8rem;" onclick="addNewVariant()">+ Agregar Color</button>
+                        </div>
+                        <div id="variants-editor-container" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                            <!-- Variants injected here -->
+                        </div>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 1rem; margin-top: 1.5rem; position: sticky; bottom: -2.5rem; background: white; padding: 1rem 0; border-top: 1px solid #eee;">
-                    <button type="button" class="btn" style="flex: 1; background: #eee;" onclick="closeModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-add" style="flex: 1;">Guardar Cambios</button>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                    <button type="button" class="btn" style="flex: 1; background: #eee; color: #666;" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-add" style="flex: 2;">Guardar Producto</button>
                 </div>
             </form>
         </div>

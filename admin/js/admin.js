@@ -524,6 +524,28 @@ function setVariantsToEditor(variants) {
 
 // --- SAVING PRODUCT ---
 function setupProductEventListeners() {
+    // Add Product Button
+    document.getElementById('add-product-btn')?.addEventListener('click', () => {
+        document.getElementById('modal-title').textContent = 'Nuevo Producto';
+        const form = document.getElementById('product-form');
+        form.reset();
+        document.getElementById('edit-id').value = '';
+        document.getElementById('p-badge').value = '';
+        document.getElementById('p-free-shipping').checked = false;
+        document.getElementById('variants-editor-container').innerHTML = '';
+        switchModalTab('tab-general');
+        openModal();
+    });
+
+    // Tab Switching Logic
+    const tabBtns = document.querySelectorAll('.modal-tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            switchModalTab(tabId);
+        });
+    });
+
     const productForm = document.getElementById('product-form');
     if (productForm) {
         productForm.addEventListener('submit', async (e) => {
@@ -540,26 +562,31 @@ function setupProductEventListeners() {
                 brand: document.getElementById('p-brand').value,
                 description: document.getElementById('p-desc').value,
                 status: document.getElementById('p-status').value,
-                tags: document.getElementById('p-tags').value.split(',').map(t => t.trim()),
+                badge: document.getElementById('p-badge').value,
+                tags: document.getElementById('p-tags').value.split(',').map(t => t.trim()).filter(t => t !== ''),
                 gallery: document.getElementById('p-gallery').value.split(',').map(t => t.trim()).filter(t => t !== ''),
-                variants: getVariantsFromEditor()
+                variants: getVariantsFromEditor(),
+                shipping_info: {
+                    free_shipping: document.getElementById('p-free-shipping').checked,
+                    cost: 0
+                }
             };
 
             try {
                 if (id) {
                     const { error } = await supabaseClient.from('products').update(productData).eq('id', id);
                     if (error) throw error;
-                    alert('Producto actualizado.');
+                    alert('Producto actualizado con éxito.');
                 } else {
                     const { error } = await supabaseClient.from('products').insert([productData]);
                     if (error) throw error;
-                    alert('Producto creado.');
+                    alert('¡Producto creado con éxito!');
                 }
                 closeModal();
                 await loadAdminProducts();
             } catch (error) {
                 console.error('Error al guardar:', error);
-                alert('Error al guardar. Revisa la consola.');
+                alert('Error al guardar: ' + (error.message || 'Error desconocido'));
             }
         });
     }
@@ -572,6 +599,15 @@ function setupProductEventListeners() {
             const text = row.textContent.toLowerCase();
             row.style.display = text.includes(term) ? '' : 'none';
         });
+    });
+}
+
+function switchModalTab(tabId) {
+    document.querySelectorAll('.modal-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.toggle('active', content.id === tabId);
     });
 }
 
@@ -594,10 +630,16 @@ window.editProduct = (id) => {
     document.getElementById('p-stock').value = p.stock || 0;
     document.getElementById('p-desc').value = p.description || '';
     document.getElementById('p-status').value = p.status || 'active';
+    document.getElementById('p-badge').value = p.badge || '';
     document.getElementById('p-tags').value = (p.tags || []).join(', ');
     document.getElementById('p-gallery').value = (p.gallery || []).join(', ');
     
+    // Shipping info
+    const shipping = p.shipping_info || { free_shipping: false };
+    document.getElementById('p-free-shipping').checked = !!shipping.free_shipping;
+
     setVariantsToEditor(p.variants);
+    switchModalTab('tab-general');
     openModal();
 };
 
