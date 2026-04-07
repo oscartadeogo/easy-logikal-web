@@ -183,6 +183,7 @@
             <li class="nav-item" data-target="orders-section">Pedidos</li>
             <li class="nav-item" data-target="analytics-section">Analytics</li>
             <li class="nav-item" data-target="cms-section">CMS Blog</li>
+            <li class="nav-item" data-target="users-section">Usuarios</li>
             <li class="nav-item">Configuración</li>
         </ul>
         <button class="logout" id="logout-btn">Cerrar Sesión</button>
@@ -231,6 +232,67 @@
                     </thead>
                     <tbody id="product-table-body">
                         <!-- Products will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="orders-section" class="dashboard-section" style="display: none;">
+            <div class="header">
+                <h1>Gestión de Pedidos</h1>
+            </div>
+            <div class="card mt-2">
+                <div class="table-header">
+                    <h3>Pedidos Recientes</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body">
+                        <!-- Pedidos mock -->
+                        <tr>
+                            <td>#ORD-1001</td>
+                            <td>Distribuidora Norte</td>
+                            <td>$15,400.00</td>
+                            <td><span style="color: blue;">Pagado</span></td>
+                            <td>06 Abr 2026</td>
+                            <td><button class="btn btn-edit">Ver Detalle</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="users-section" class="dashboard-section" style="display: none;">
+            <div class="header">
+                <h1>Usuarios y Permisos</h1>
+                <button class="btn btn-add">+ Nuevo Usuario</button>
+            </div>
+            <div class="card mt-2">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Último Acceso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>logikal@admin.com</td>
+                            <td>Super Admin</td>
+                            <td>Hace 5 min</td>
+                            <td><button class="btn btn-edit">Editar</button></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -308,6 +370,14 @@
                 <div class="form-group">
                     <label>Precio ($)</label>
                     <input type="number" id="p-price" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Stock Inicial</label>
+                    <input type="number" id="p-stock" value="10" required>
+                </div>
+                <div class="form-group">
+                    <label>Variantes (JSON)</label>
+                    <textarea id="p-variants" placeholder='[{"color": "rojo", "talla": "XL"}]' rows="3"></textarea>
                 </div>
                 <div class="form-group">
                     <label>URL Imagen</label>

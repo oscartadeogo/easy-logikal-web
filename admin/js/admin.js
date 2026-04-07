@@ -36,8 +36,52 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'analytics-section') {
                 initCharts();
             }
+            if (target === 'orders-section') {
+                loadOrders();
+            }
         });
     });
+
+    async function loadOrders() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('orders')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            renderOrdersTable(data);
+        } catch (error) {
+            console.error('Error cargando pedidos:', error);
+        }
+    }
+
+    function renderOrdersTable(orders) {
+        const container = document.getElementById('orders-table-body');
+        if (!container || !orders) return;
+
+        container.innerHTML = orders.map(ord => `
+            <tr>
+                <td>#${ord.id}</td>
+                <td>${ord.customer_name}</td>
+                <td>$${parseFloat(ord.total).toLocaleString('es-MX')}</td>
+                <td><span style="color: ${getStatusColor(ord.status)}; font-weight: 600;">${ord.status.toUpperCase()}</span></td>
+                <td>${new Date(ord.created_at).toLocaleDateString()}</td>
+                <td><button class="btn btn-edit" onclick="viewOrderDetail(${ord.id})">Detalles</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function getStatusColor(status) {
+        const colors = {
+            'pending': 'orange',
+            'paid': 'blue',
+            'shipped': 'purple',
+            'delivered': 'green',
+            'cancelled': 'red'
+        };
+        return colors[status] || 'black';
+    }
 
     // 2. Charts Initialization
     function initCharts() {
@@ -93,7 +137,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 category: document.getElementById('p-category').value,
                 price: parseFloat(document.getElementById('p-price').value),
                 image: document.getElementById('p-image').value,
-                stock: 10 // Valor por defecto
+                stock: parseInt(document.getElementById('p-stock').value),
+                variants: JSON.parse(document.getElementById('p-variants').value || '[]')
             };
 
             try {

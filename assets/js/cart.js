@@ -166,28 +166,58 @@ async function handleCheckout() {
     checkoutBtn.textContent = 'Procesando...';
     checkoutBtn.disabled = true;
 
-    // Simulation
-    console.log(`Iniciando proceso de pago (${paymentMethod})...`);
-    
-    setTimeout(() => {
-        if (paymentMethod === 'transfer') {
-            alert('¡Pedido confirmado! Se han generado los datos para tu transferencia bancaria. Revisa tu correo.');
-        } else {
-            alert('Redirigiendo a pasarela de pago segura (Stripe/PayPal)...');
-            alert('¡Pago completado con éxito!');
-        }
+    // Tax Calculation
+    const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const tax = subtotal * 0.16;
+    const total = subtotal + tax;
+
+    // 1. WhatsApp Quote (Always good to have as backup)
+    // sendWhatsAppQuote();
+
+    try {
+        // 2. Persist Order in Supabase
+        const { data, error } = await supabaseClient
+            .from('orders')
+            .insert([{
+                customer_name: "Cliente Web", // En un flujo real, pediríamos estos datos
+                customer_email: "cliente@ejemplo.com",
+                items: cart,
+                total: total,
+                status: 'pending',
+                payment_method: paymentMethod
+            }]);
+
+        if (error) throw error;
+
+        // Simulation of redirect/success
+        console.log(`Iniciando proceso de pago (${paymentMethod})...`);
         
-        generateInvoice();
-        cart = [];
-        saveCart();
-        updateCartUI();
-        closeCart();
-        checkoutBtn.textContent = 'Proceder al Pago';
+        setTimeout(() => {
+            if (paymentMethod === 'transfer') {
+                alert('¡Pedido confirmado! Se han generado los datos para tu transferencia bancaria. Revisa tu correo.');
+            } else {
+                alert('Redirigiendo a pasarela de pago segura (Stripe/PayPal)...');
+                alert('¡Pago completado con éxito!');
+            }
+            
+            generateInvoice(cart, total);
+            cart = [];
+            saveCart();
+            updateCartUI();
+            closeCart();
+            checkoutBtn.textContent = 'Proceder al Pago';
+            checkoutBtn.disabled = false;
+        }, 2000);
+
+    } catch (error) {
+        console.error('Error al procesar pedido:', error);
+        alert('Hubo un problema al procesar tu pedido. Por favor intenta de nuevo.');
         checkoutBtn.disabled = false;
-    }, 2000);
+        checkoutBtn.textContent = 'Proceder al Pago';
+    }
 }
 
-function generateInvoice() {
-    console.log('Generando facturación electrónica...');
-    // Real logic would generate a PDF or send an email via a backend function
+function generateInvoice(items, total) {
+    console.log('Generando facturación electrónica (Simulación CFDI)...');
+    // En producción, aquí se llamaría a un servicio como Facturama o Quaderno
 }
