@@ -302,7 +302,7 @@
             <li class="nav-item" data-target="analytics-section">Analytics</li>
             <li class="nav-item" data-target="cms-section">CMS Blog</li>
             <li class="nav-item" data-target="users-section">Usuarios</li>
-            <li class="nav-item">Configuración</li>
+            <li class="nav-item" data-target="config-section">Configuración</li>
         </ul>
         <button class="logout" id="logout-btn">Cerrar Sesión</button>
     </aside>
@@ -458,7 +458,7 @@
         <div id="users-section" class="dashboard-section" style="display: none;">
             <div class="header">
                 <h1>Usuarios y Permisos</h1>
-                <button class="btn btn-add">+ Nuevo Usuario</button>
+                <button class="btn btn-add" id="add-user-btn">+ Nuevo Usuario</button>
             </div>
             <div class="card mt-2">
                 <table>
@@ -470,7 +470,7 @@
                             <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="users-table-body">
                         <tr>
                             <td>logikal@admin.com</td>
                             <td>Super Admin</td>
@@ -479,6 +479,47 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <div id="config-section" class="dashboard-section" style="display: none;">
+            <div class="header">
+                <h1>Configuración del Sistema</h1>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>General</h3>
+                    <form class="mt-1">
+                        <div class="form-group">
+                            <label>Nombre de la Empresa</label>
+                            <input type="text" value="Easy Logikal Comercialización">
+                        </div>
+                        <div class="form-group">
+                            <label>Email de Contacto</label>
+                            <input type="email" value="contacto@elogikal.com.mx">
+                        </div>
+                        <div class="form-group">
+                            <label>WhatsApp</label>
+                            <input type="text" value="+52 55 1234 5678">
+                        </div>
+                        <button type="button" class="btn btn-add">Guardar Cambios</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>Ajustes de Interfaz</h3>
+                    <div class="form-group mt-1">
+                        <label>Color Primario</label>
+                        <input type="color" value="#C62828">
+                    </div>
+                    <div class="form-group">
+                        <label>Modo Mantenimiento</label>
+                        <select>
+                            <option>Desactivado</option>
+                            <option>Activado</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-add">Actualizar UI</button>
+                </div>
             </div>
         </div>
 
@@ -695,6 +736,37 @@
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                     <button type="button" class="btn" style="flex: 1; background: #eee;" onclick="closeBlogModal()">Cancelar</button>
                     <button type="submit" class="btn btn-add" style="flex: 1;">Guardar Entrada</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Users -->
+    <div class="modal" id="user-modal">
+        <div class="modal-content">
+            <span class="close-modal-btn" onclick="closeUserModal()">&times;</span>
+            <h2 id="user-modal-title">Nuevo Usuario Admin</h2>
+            <form id="user-form">
+                <input type="hidden" id="u-id">
+                <div class="form-group">
+                    <label>Email / Usuario</label>
+                    <input type="email" id="u-email" required placeholder="admin@elogikal.com">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="u-password" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label>Rol</label>
+                    <select id="u-role">
+                        <option value="Admin">Admin</option>
+                        <option value="Editor">Editor</option>
+                        <option value="Viewer">Viewer</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" style="flex: 1; background: #eee;" onclick="closeUserModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-add" style="flex: 1;">Crear Usuario</button>
                 </div>
             </form>
         </div>

@@ -53,6 +53,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'cms-section') {
                 loadBlogPosts();
             }
+            if (target === 'users-section') {
+                // Mock loading users or real if implemented
+            }
+            if (target === 'config-section') {
+                // Settings loaded
+            }
             if (target === 'products-section') {
                 loadAdminProducts();
             }
@@ -320,6 +326,45 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.openBlogModal = () => document.getElementById('blog-modal').style.display = 'flex';
     window.closeBlogModal = () => document.getElementById('blog-modal').style.display = 'none';
+
+    // USER MODAL HELPERS
+    const addUserBtn = document.getElementById('add-user-btn');
+    const userForm = document.getElementById('user-form');
+
+    if (addUserBtn) {
+        addUserBtn.addEventListener('click', () => {
+            document.getElementById('user-modal-title').textContent = 'Nuevo Usuario Admin';
+            userForm.reset();
+            document.getElementById('u-id').value = '';
+            openUserModal();
+        });
+    }
+
+    if (userForm) {
+        userForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('u-email').value;
+            const role = document.getElementById('u-role').value;
+            
+            // Add to table (mock)
+            const table = document.getElementById('users-table-body');
+            const row = `
+                <tr>
+                    <td>${email}</td>
+                    <td>${role}</td>
+                    <td>Recién creado</td>
+                    <td><button class="btn btn-edit">Editar</button></td>
+                </tr>
+            `;
+            table.insertAdjacentHTML('beforeend', row);
+            
+            alert(`Usuario ${email} creado con éxito.`);
+            closeUserModal();
+        });
+    }
+
+    window.openUserModal = () => document.getElementById('user-modal').style.display = 'flex';
+    window.closeUserModal = () => document.getElementById('user-modal').style.display = 'none';
 
     window.editBlogPost = async (id) => {
         try {
