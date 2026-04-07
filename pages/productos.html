@@ -56,80 +56,85 @@
         </div>
     </header>
 
-    <main class="catalog-page mt-2">
+    <main class="catalog-page mt-4">
         <div class="container">
-            <div class="catalog-header mb-2">
-                <h1 class="section-title">Nuestro <span>Catálogo</span></h1>
-                <p class="text-muted">Explora nuestra selección exclusiva de productos premium de las mejores marcas del mundo.</p>
+            <div class="catalog-header mb-3">
+                <nav class="breadcrumb mb-1">
+                    <a href="../index.html">Inicio</a> / <span>Catálogo</span>
+                </nav>
+                <h1 class="section-title">Catálogo de <span>Productos</span></h1>
+                <p class="text-muted">Mostrando nuestra selección premium para importación y distribución nacional.</p>
             </div>
 
             <div class="catalog-layout">
                 <!-- Sidebar Filters -->
                 <aside class="catalog-sidebar">
-                    <div class="filter-group">
-                        <h3>Categorías</h3>
-                        <ul class="filter-list" id="category-filters">
-                            <li><button class="filter-btn active" data-category="all">Todos los productos</button></li>
-                            <li><button class="filter-btn" data-category="maisto">Maisto (Modelos a escala)</button></li>
-                            <li><button class="filter-btn" data-category="keter">Keter (Almacenaje)</button></li>
-                            <li><button class="filter-btn" data-category="ikea">IKEA (Hogar)</button></li>
-                            <li><button class="filter-btn" data-category="logikal">Logikal Plus</button></li>
-                        </ul>
-                    </div>
-
-                    <div class="filter-group mt-2">
-                        <h3>Búsqueda</h3>
-                        <div class="search-box">
-                            <input type="text" id="product-search" placeholder="Buscar producto...">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <div class="filter-box">
+                        <div class="filter-group">
+                            <h3>Búsqueda Avanzada</h3>
+                            <div class="search-box-modern">
+                                <input type="text" id="product-search" placeholder="Nombre, SKU o Marca...">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            </div>
                         </div>
+
+                        <div class="filter-group mt-2">
+                            <h3>Categorías</h3>
+                            <ul class="filter-list" id="category-filters">
+                                <li><button class="filter-btn active" data-category="all">Todos los productos <span class="count">(0)</span></button></li>
+                                <li><button class="filter-btn" data-category="maisto">Maisto (Coleccionables) <span class="count">(0)</span></button></li>
+                                <li><button class="filter-btn" data-category="keter">Keter (Muebles Exterior) <span class="count">(0)</span></button></li>
+                                <li><button class="filter-btn" data-category="ikea">IKEA (Hogar) <span class="count">(0)</span></button></li>
+                                <li><button class="filter-btn" data-category="logikal">Logikal Plus <span class="count">(0)</span></button></li>
+                            </ul>
+                        </div>
+
+                        <div class="filter-group mt-2">
+                            <h3>Rango de Precio</h3>
+                            <div class="price-slider-container">
+                                <input type="range" id="price-range" min="0" max="50000" step="100" value="50000">
+                                <div class="price-labels">
+                                    <span>$0</span>
+                                    <span id="price-max-label">$50,000+</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-group mt-2">
+                            <h3>Disponibilidad</h3>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="stock-only" checked>
+                                    <span>En Stock</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-outline w-100 mt-2" id="reset-filters">Limpiar Filtros</button>
                     </div>
                 </aside>
 
                 <!-- Product Grid -->
                 <div class="catalog-main">
+                    <div class="catalog-toolbar mb-2">
+                        <div class="results-count">Mostrando <span id="current-count">0</span> productos</div>
+                        <div class="sort-options">
+                            <label>Ordenar por:</label>
+                            <select id="sort-products">
+                                <option value="newest">Nuevos Ingresos</option>
+                                <option value="price-low">Precio: Menor a Mayor</option>
+                                <option value="price-high">Precio: Mayor a Menor</option>
+                                <option value="name-az">Nombre: A-Z</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="product-grid" id="product-container">
-                        <!-- Products will be loaded dynamically via JS -->
                         <div class="loader">Cargando productos...</div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
-
-    <!-- Shopping Cart Sidebar (Drawer) -->
-    <div class="cart-drawer" id="cart-drawer">
-        <div class="cart-drawer-header">
-            <h2>Tu Carrito</h2>
-            <button id="cart-close">&times;</button>
-        </div>
-        <div class="cart-items" id="cart-items">
-            <!-- Cart items will be loaded here -->
-            <p class="empty-cart-msg">Tu carrito está vacío.</p>
-        </div>
-
-        <div class="cart-payment-options" style="padding: 1rem; border-top: 1px solid var(--border);">
-            <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Método de Pago</h4>
-            <div style="margin-bottom: 0.5rem;">
-                <input type="radio" id="pay-card" name="payment-method" value="card" checked>
-                <label for="pay-card" style="font-size: 0.85rem; cursor: pointer;">Tarjeta Crédito / Débito (Stripe)</label>
-            </div>
-            <div>
-                <input type="radio" id="pay-transfer" name="payment-method" value="transfer">
-                <label for="pay-transfer" style="font-size: 0.85rem; cursor: pointer;">Transferencia Bancaria</label>
-            </div>
-        </div>
-
-        <div class="cart-footer">
-            <div class="cart-total">
-                <span>Total estimado:</span>
-                <span id="cart-total-value">$0.00</span>
-            </div>
-            <button class="btn btn-primary w-100" id="checkout-btn">Proceder al Pago</button>
-            <p class="cart-note">* Los precios son informativos para cotización.</p>
-        </div>
-    </div>
-    <div class="cart-overlay" id="cart-overlay"></div>
 
     <!-- Footer -->
     <footer class="footer mt-2">

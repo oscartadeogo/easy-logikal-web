@@ -111,15 +111,15 @@
                         <form id="contact-form">
                             <div class="form-group">
                                 <label>Nombre Completo</label>
-                                <input type="text" placeholder="Ej. Juan Pérez" required>
+                                <input type="text" id="c-name" placeholder="Ej. Juan Pérez" required>
                             </div>
                             <div class="form-group">
                                 <label>Email Corporativo</label>
-                                <input type="email" placeholder="juan@empresa.com" required>
+                                <input type="email" id="c-email" placeholder="juan@empresa.com" required>
                             </div>
                             <div class="form-group">
                                 <label>Asunto</label>
-                                <select required>
+                                <select id="c-subject" required>
                                     <option value="cotizacion">Solicitar Cotización</option>
                                     <option value="distribuidor">Ser Distribuidor</option>
                                     <option value="soporte">Soporte Técnico</option>
@@ -128,9 +128,9 @@
                             </div>
                             <div class="form-group">
                                 <label>Mensaje</label>
-                                <textarea rows="5" placeholder="Cuéntanos más sobre tu necesidad..."></textarea>
+                                <textarea id="c-message" rows="5" placeholder="Cuéntanos más sobre tu necesidad..."></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">Enviar Mensaje</button>
+                            <button type="submit" id="c-submit" class="btn btn-primary w-100">Enviar Mensaje</button>
                         </form>
                     </div>
                 </div>
@@ -169,5 +169,38 @@
     <script src="../assets/js/main.js"></script>
     <script src="../assets/js/cart.js"></script>
     <script src="../assets/js/animations.js"></script>
+    <script>
+        document.getElementById('contact-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('c-submit');
+            
+            const contactData = {
+                name: document.getElementById('c-name').value,
+                email: document.getElementById('c-email').value,
+                subject: document.getElementById('c-subject').value,
+                message: document.getElementById('c-message').value
+            };
+
+            submitBtn.textContent = 'Enviando...';
+            submitBtn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('contacts')
+                    .insert([contactData]);
+
+                if (error) throw error;
+
+                alert('¡Mensaje enviado con éxito! Nos pondremos en contacto contigo pronto.');
+                document.getElementById('contact-form').reset();
+            } catch (error) {
+                console.error('Error enviando mensaje:', error);
+                alert('Hubo un error al enviar el mensaje. Por favor intenta de nuevo.');
+            } finally {
+                submitBtn.textContent = 'Enviar Mensaje';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>

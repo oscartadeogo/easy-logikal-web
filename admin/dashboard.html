@@ -79,30 +79,106 @@
             margin-bottom: 2rem;
         }
         
-        /* Stats Cards */
+        /* Stats Cards Modern */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
         .stat-card {
             background: white;
             padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary);
+            opacity: 0.1;
+        }
+        .stat-card.alert::after {
+            background: #d32f2f;
+            opacity: 1;
         }
         .stat-card h4 {
             margin: 0;
             color: #666;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         .stat-card p {
             margin: 0.5rem 0 0;
-            font-size: 1.8rem;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--secondary);
+        }
+        .stat-card .stat-trend {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .trend-up { color: #2e7d32; }
+        .trend-down { color: #d32f2f; }
+
+        /* Charts Layout */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Inventory Alerts */
+        .stock-alert-badge {
+            background: #ffebee;
+            color: #d32f2f;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
             font-weight: 700;
         }
+
+        /* Order Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: -1.15rem;
+            top: 12px;
+            width: 2px;
+            height: calc(100% - 12px);
+            background: var(--border);
+        }
+        .timeline-item:last-child::after { display: none; }
 
         /* Table */
         .card {
@@ -165,14 +241,30 @@
             background: rgba(0,0,0,0.5);
             align-items: center;
             justify-content: center;
+            z-index: 10000;
+            overflow-y: auto;
+            padding: 2rem 0;
         }
         .modal-content {
             background: white;
-            padding: 2rem;
+            padding: 2.5rem;
             border-radius: 8px;
-            width: 100%;
-            max-width: 500px;
+            width: 90%;
+            max-width: 600px;
+            margin: auto;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
         }
+        .close-modal-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+            color: #888;
+        }
+        .close-modal-btn:hover { color: var(--primary); }
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; }
         .form-group input, .form-group select { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; }
@@ -209,22 +301,43 @@
                 <div class="user-info">Bienvenido, Admin</div>
             </div>
 
+            <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <h4>Total Productos</h4>
-                    <p id="total-products">0</p>
+                    <h4>Ventas del Mes</h4>
+                    <p id="stat-sales">$0.00</p>
+                    <div class="stat-trend trend-up">▲ 12% vs mes ant.</div>
                 </div>
                 <div class="stat-card">
-                    <h4>Categorías</h4>
-                    <p>4</p>
+                    <h4>Pedidos Pendientes</h4>
+                    <p id="stat-pending">0</p>
+                    <div class="stat-trend">Acción requerida pronto</div>
                 </div>
                 <div class="stat-card">
-                    <h4>Stock Crítico</h4>
-                    <p>2</p>
+                    <h4>Ticket Promedio</h4>
+                    <p id="stat-avg">$0.00</p>
+                    <div class="stat-trend trend-up">▲ 5% vs mes ant.</div>
                 </div>
-                <div class="stat-card">
-                    <h4>Valor Inventario</h4>
-                    <p>$450k</p>
+                <div class="stat-card alert" id="stat-low-stock-card">
+                    <h4>Stock Bajo</h4>
+                    <p id="stat-low-stock">0</p>
+                    <div class="stat-trend trend-down">Productos en riesgo</div>
+                </div>
+            </div>
+
+            <!-- Charts & Activity -->
+            <div class="charts-grid">
+                <div class="card">
+                    <h3>Rendimiento de Ventas (30 días)</h3>
+                    <div style="height: 300px;">
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Alertas de Inventario</h3>
+                    <ul class="alert-list" id="low-stock-list">
+                        <li class="loader">Analizando stock...</li>
+                    </ul>
                 </div>
             </div>
 
@@ -380,7 +493,8 @@
                             <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="cms-table-body">
+                        <!-- Post mock -->
                         <tr>
                             <td>Cómo optimizar tu almacén con Keter</td>
                             <td>12 Mar 2026</td>
@@ -402,45 +516,55 @@
     <!-- Modal for Add/Edit -->
     <div class="modal" id="product-modal">
         <div class="modal-content">
+            <span class="close-modal-btn" onclick="closeModal()">&times;</span>
             <h2 id="modal-title">Agregar Producto</h2>
             <form id="product-form">
                 <input type="hidden" id="edit-id">
-                <div class="form-group">
-                    <label>Nombre del Producto</label>
-                    <input type="text" id="p-name" required>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Nombre del Producto</label>
+                        <input type="text" id="p-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select id="p-category" required>
+                            <option value="maisto">Maisto</option>
+                            <option value="keter">Keter</option>
+                            <option value="ikea">IKEA</option>
+                            <option value="logikal">Logikal Plus</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Categoría</label>
-                    <select id="p-category" required>
-                        <option value="maisto">Maisto</option>
-                        <option value="keter">Keter</option>
-                        <option value="ikea">IKEA</option>
-                        <option value="logikal">Logikal Plus</option>
-                    </select>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Precio ($)</label>
+                        <input type="number" id="p-price" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>SKU</label>
+                        <input type="text" id="p-sku" placeholder="Ej. 18-38202">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Precio ($)</label>
-                    <input type="number" id="p-price" step="0.01" required>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <input type="text" id="p-brand" placeholder="Ej. Bburago">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Inicial</label>
+                        <input type="number" id="p-stock" value="110" required>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>SKU</label>
-                    <input type="text" id="p-sku" placeholder="Ej. 18-38202">
-                </div>
-                <div class="form-group">
-                    <label>Marca</label>
-                    <input type="text" id="p-brand" placeholder="Ej. Bburago">
-                </div>
-                <div class="form-group">
-                    <label>Stock Inicial</label>
-                    <input type="number" id="p-stock" value="110" required>
-                </div>
+
                 <div class="form-group">
                     <label>Descripción Corta</label>
                     <textarea id="p-desc" rows="2"></textarea>
                 </div>
                 <div class="form-group">
                     <label>Descripción Larga (HTML)</label>
-                    <textarea id="p-long-desc" rows="5"></textarea>
+                    <textarea id="p-long-desc" rows="4"></textarea>
                 </div>
                 <div class="form-group">
                     <label>Etiquetas (Separadas por coma)</label>
@@ -452,13 +576,13 @@
                 </div>
                 <div class="form-group">
                     <label>Galería (URLs separadas por coma)</label>
-                    <textarea id="p-gallery" rows="3" placeholder="url1, url2, url3"></textarea>
+                    <textarea id="p-gallery" rows="2" placeholder="url1, url2, url3"></textarea>
                 </div>
                 <div class="form-group">
                     <label>Variantes (JSON)</label>
-                    <textarea id="p-variants" placeholder='[{"color": "rojo", "talla": "XL"}]' rows="2"></textarea>
+                    <textarea id="p-variants" placeholder='[{"color": "rojo", "talla": "XL"}]' rows="1"></textarea>
                 </div>
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem; position: sticky; bottom: -2.5rem; background: white; padding: 1rem 0; border-top: 1px solid #eee;">
                     <button type="button" class="btn" style="flex: 1; background: #eee;" onclick="closeModal()">Cancelar</button>
                     <button type="submit" class="btn btn-add" style="flex: 1;">Guardar Cambios</button>
                 </div>
@@ -469,6 +593,7 @@
     <!-- Modal for Marketing -->
     <div class="modal" id="marketing-modal">
         <div class="modal-content">
+            <span class="close-modal-btn" onclick="closeMarketingModal()">&times;</span>
             <h2 id="marketing-modal-title">Agregar Promoción / Banner</h2>
             <form id="marketing-form">
                 <input type="hidden" id="m-id">
@@ -492,7 +617,7 @@
                     <div style="display: flex; gap: 0.5rem;">
                         <input type="text" id="m-link" placeholder="https://..." style="flex: 1;">
                         <input type="file" id="m-file" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
-                        <button type="button" class="btn" style="background: #666; color: white;" onclick="document.getElementById('m-file').click()">Subir</button>
+                        <button type="button" class="btn" style="background: #666; color: white; padding: 0.5rem 1rem;" onclick="document.getElementById('m-file').click()">Subir</button>
                     </div>
                     <div id="m-preview-container" style="margin-top: 1rem; display: none;">
                         <img id="m-preview" src="" alt="Preview" style="max-width: 100%; height: 100px; object-fit: cover; border-radius: 4px;">
@@ -513,6 +638,50 @@
         </div>
     </div>
 
+    <!-- Modal for Blog CMS -->
+    <div class="modal" id="blog-modal">
+        <div class="modal-content">
+            <span class="close-modal-btn" onclick="closeBlogModal()">&times;</span>
+            <h2 id="blog-modal-title">Nueva Entrada de Blog</h2>
+            <form id="blog-form">
+                <input type="hidden" id="b-id">
+                <div class="form-group">
+                    <label>Título</label>
+                    <input type="text" id="b-title" required>
+                </div>
+                <div class="form-group">
+                    <label>Resumen (Short Description)</label>
+                    <textarea id="b-summary" rows="2" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Contenido Principal (HTML)</label>
+                    <textarea id="b-content" rows="6" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Imagen Destacada (URL)</label>
+                    <input type="text" id="b-image" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <input type="text" id="b-category" placeholder="Logística, Novedades, etc.">
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="b-status">
+                        <option value="published">Publicado</option>
+                        <option value="draft">Borrador</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" style="flex: 1; background: #eee;" onclick="closeBlogModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-add" style="flex: 1;">Guardar Entrada</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/admin.js"></script>
 </body>
 </html>

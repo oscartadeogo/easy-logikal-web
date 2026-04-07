@@ -83,6 +83,203 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadProducts();
     await loadMarketingBanners();
+    await loadHomeFeatured();
+
+    async function loadHomeFeatured() {
+        const featuredContainer = document.getElementById('home-featured-products');
+        if (!featuredContainer) return;
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('products')
+                .select('*')
+                .limit(4); // Load first 4 for home
+
+            if (error) throw error;
+            renderFeatured(data, featuredContainer);
+        } catch (error) {
+            console.warn('Error cargando destacados:', error);
+            // Fallback to static if needed
+        }
+    }
+
+    function renderFeatured(items, container) {
+        if (!container) return;
+        container.innerHTML = items.map(product => `
+            <div class="product-card" data-reveal="up" onclick="window.location.href='pages/producto.html?id=${product.id}'" style="cursor: pointer;">
+                <div class="product-image">
+                    ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
+                    <img src="${product.image || 'https://via.placeholder.com/400'}" alt="${product.name}">
+                </div>
+                <div class="product-info">
+                    <span class="product-category">${product.category}</span>
+                    <h3 class="product-title">${product.name}</h3>
+                    <p class="product-price">$${parseFloat(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                </div>
+                <div class="product-actions" onclick="event.stopPropagation()">
+                    <button class="btn btn-primary" onclick="window.location.href='pages/producto.html?id=${product.id}'">Ver Producto</button>
+                </div>
+            </div>
+        `).join('');
+        initRevealAnimations();
+    }
+
+    function initRevealAnimations() {
+        if (!window.gsap || !window.ScrollTrigger) return;
+        
+        gsap.registerPlugin(ScrollTrigger);
+
+        document.querySelectorAll('[data-reveal]').forEach(el => {
+            const direction = el.getAttribute('data-reveal');
+            let x = 0, y = 0;
+
+            if (direction === 'up') y = 50;
+            if (direction === 'down') y = -50;
+            if (direction === 'left') x = -50;
+            if (direction === 'right') x = 50;
+
+            gsap.from(el, {
+                x: x,
+                y: y,
+                opacity: 0,
+                duration: 1,
+                ease: 'power3.out',
+                scrollTrigger: {
+                    trigger: el,
+                    start: 'top 85%',
+                    toggleActions: 'play none none none'
+                }
+            });
+        });
+    }
+
+    // Advanced Search & Suggestions
+    const searchSuggestions = document.createElement('div');
+    searchSuggestions.className = 'search-suggestions';
+    if (searchInput) {
+        searchInput.parentElement.appendChild(searchSuggestions);
+
+        searchInput.addEventListener('input', async (e) => {
+            const term = e.target.value;
+            if (term.length < 2) {
+                searchSuggestions.innerHTML = '';
+                return;
+            }
+
+            // Real-time suggestions (mocking database search)
+            const matches = allProducts.filter(p => 
+                p.name.toLowerCase().includes(term.toLowerCase()) || 
+                (p.sku && p.sku.toLowerCase().includes(term.toLowerCase()))
+            ).slice(0, 5);
+
+            renderSuggestions(matches);
+        });
+    }
+
+    function renderSuggestions(matches) {
+        if (matches.length === 0) {
+            searchSuggestions.innerHTML = '<div class="suggestion-item">No se encontraron resultados</div>';
+            return;
+        }
+
+        searchSuggestions.innerHTML = matches.map(p => `
+            <div class="suggestion-item" onclick="window.location.href='producto.html?id=${p.id}'">
+                <img src="${p.image}" alt="${p.name}">
+                <div>
+                    <div class="sug-name">${p.name}</div>
+                    <div class="sug-price">$${parseFloat(p.price).toLocaleString('es-MX')}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Quick Quote Modal Logic
+    function injectQuoteModal() {
+        if (document.getElementById('quote-modal')) return;
+        const modalHTML = `
+            <div class="modal" id="quote-modal">
+                <div class="modal-content">
+                    <span class="close-modal-btn" onclick="closeQuoteModal()">&times;</span>
+                    <h2>Solicitar Cotización <span>Express</span></h2>
+                    <p>Completa tus datos y un asesor te contactará en menos de 2 horas.</p>
+                    <form id="quick-quote-form" class="mt-2">
+                        <div class="form-group">
+                            <label>Nombre Completo</label>
+                            <input type="text" id="q-name" placeholder="Ej. Juan Pérez" required>
+                        </div>
+                        <div class="form-group">
+                            <label>WhatsApp / Teléfono</label>
+                            <input type="tel" id="q-phone" placeholder="55 1234 5678" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Producto de Interés</label>
+                            <input type="text" id="q-product" placeholder="Nombre del producto o categoría">
+                        </div>
+                        <div class="form-group">
+                            <label>Mensaje</label>
+                            <textarea id="q-message" rows="3" placeholder="¿Cuántas piezas necesitas?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-1" id="q-submit">Enviar Solicitud</button>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        const qForm = document.getElementById('quick-quote-form');
+        if (qForm) {
+            qForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = document.getElementById('q-submit');
+                submitBtn.textContent = 'Enviando...';
+                submitBtn.disabled = true;
+
+                try {
+                    const { error } = await supabaseClient
+                        .from('contacts')
+                        .insert([{
+                            name: document.getElementById('q-name').value,
+                            email: 'quote@quick.form', // Placeholder for quick form
+                            subject: 'Cotización Rápida: ' + document.getElementById('q-product').value,
+                            message: `Tel: ${document.getElementById('q-phone').value}\n\nMensaje: ${document.getElementById('q-message').value}`
+                        }]);
+
+                    if (error) throw error;
+                    alert('¡Solicitud enviada! Un asesor te contactará pronto.');
+                    closeQuoteModal();
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al enviar. Intenta de nuevo.');
+                } finally {
+                    submitBtn.textContent = 'Enviar Solicitud';
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+    }
+
+    window.openQuoteModal = (productName = '') => {
+        injectQuoteModal();
+        document.getElementById('quote-modal').style.display = 'flex';
+        if (productName) {
+            document.getElementById('q-product').value = productName;
+        }
+    };
+
+    window.closeQuoteModal = () => {
+        const modal = document.getElementById('quote-modal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    // Global "Cotizar" button behavior
+    document.querySelectorAll('.btn-primary').forEach(btn => {
+        if (btn.textContent.trim().toLowerCase() === 'cotizar') {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                openQuoteModal();
+            });
+        }
+    });
 
     async function loadMarketingBanners() {
         const bannerContainer = document.getElementById('dynamic-banner-container');
@@ -113,21 +310,74 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Filtering Logic
-    categoryFilters.forEach(btn => {
-        btn.addEventListener('click', () => {
-            categoryFilters.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            const category = btn.getAttribute('data-category');
-            filterProducts(category, searchInput?.value || '');
-        });
-    });
+    // Advanced Filtering Logic
+    const priceRange = document.getElementById('price-range');
+    const priceLabel = document.getElementById('price-max-label');
+    const stockOnly = document.getElementById('stock-only');
+    const sortProducts = document.getElementById('sort-products');
+    const resetFilters = document.getElementById('reset-filters');
+    const currentCount = document.getElementById('current-count');
 
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const activeCategory = document.querySelector('.filter-btn.active').getAttribute('data-category');
-            filterProducts(activeCategory, e.target.value);
+    if (priceRange) {
+        priceRange.addEventListener('input', (e) => {
+            priceLabel.textContent = `$${parseInt(e.target.value).toLocaleString()}+`;
+            applyAllFilters();
+        });
+    }
+
+    if (stockOnly) stockOnly.addEventListener('change', applyAllFilters);
+    if (sortProducts) sortProducts.addEventListener('change', applyAllFilters);
+    if (resetFilters) {
+        resetFilters.addEventListener('click', () => {
+            if (priceRange) {
+                priceRange.value = 50000;
+                priceLabel.textContent = '$50,000+';
+            }
+            if (stockOnly) stockOnly.checked = false;
+            if (searchInput) searchInput.value = '';
+            categoryFilters.forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-category="all"]').classList.add('active');
+            applyAllFilters();
+        });
+    }
+
+    function applyAllFilters() {
+        const activeCategory = document.querySelector('.filter-btn.active')?.getAttribute('data-category') || 'all';
+        const searchTerm = searchInput?.value || '';
+        const maxPrice = priceRange ? parseInt(priceRange.value) : Infinity;
+        const onlyInStock = stockOnly ? stockOnly.checked : false;
+        const sortBy = sortProducts ? sortProducts.value : 'newest';
+
+        let filtered = allProducts.filter(p => {
+            const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
+            const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
+            const matchesPrice = p.price <= maxPrice;
+            const matchesStock = !onlyInStock || (p.stock && p.stock > 0);
+            return matchesCategory && matchesSearch && matchesPrice && matchesStock;
+        });
+
+        // Sorting
+        if (sortBy === 'price-low') filtered.sort((a, b) => a.price - b.price);
+        if (sortBy === 'price-high') filtered.sort((a, b) => b.price - a.price);
+        if (sortBy === 'name-az') filtered.sort((a, b) => a.name.localeCompare(b.name));
+        if (sortBy === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        renderProducts(filtered);
+        if (currentCount) currentCount.textContent = filtered.length;
+        updateCategoryCounts();
+    }
+
+    function updateCategoryCounts() {
+        const counts = { all: allProducts.length };
+        allProducts.forEach(p => {
+            counts[p.category] = (counts[p.category] || 0) + 1;
+        });
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            const cat = btn.getAttribute('data-category');
+            const countSpan = btn.querySelector('.count');
+            if (countSpan) countSpan.textContent = `(${counts[cat] || 0})`;
         });
     }
 
@@ -135,7 +385,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!productContainer) return;
         
         if (productsToRender.length === 0) {
-            productContainer.innerHTML = '<div class="no-results">No se encontraron productos en la base de datos.</div>';
+            productContainer.innerHTML = `
+                <div class="no-results text-center py-4 w-100">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <h3 class="mt-1">No encontramos lo que buscas</h3>
+                    <p class="text-muted">Intenta ajustar los filtros o el término de búsqueda.</p>
+                </div>
+            `;
             return;
         }
 
@@ -148,34 +404,59 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="product-info">
                     <span class="product-category">${product.category}</span>
                     <h3 class="product-title">${product.name}</h3>
+                    <div class="product-meta-small">
+                        <span class="sku">SKU: ${product.sku || 'N/A'}</span>
+                        <span class="stock-status ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}">
+                            ${product.stock > 0 ? 'En Stock' : 'Agotado'}
+                        </span>
+                    </div>
                     <p class="product-price">$${parseFloat(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <div class="product-actions" onclick="event.stopPropagation()">
-                    <button class="btn btn-outline btn-add-cart" onclick="addToCart(${product.id})">Agregar al Carrito</button>
-                    <button class="btn btn-primary btn-add-cart" onclick="window.location.href='producto.html?id=${product.id}'">Ver Detalles</button>
+                    <button class="btn btn-primary" onclick="window.location.href='producto.html?id=${product.id}'">Ver Detalles</button>
+                    <button class="btn btn-outline" onclick="addToCart(${product.id})">Agregar</button>
                 </div>
             </div>
         `).join('');
 
-        // Trigger GSAP reveal for new items
+        // GSAP Reveal for Catalog
         if (window.gsap) {
             gsap.from('.product-card', {
                 y: 30,
                 opacity: 0,
                 duration: 0.6,
-                stagger: 0.1,
+                stagger: 0.05,
                 ease: 'power2.out'
             });
         }
     }
 
-    function filterProducts(category, searchTerm) {
-        const filtered = allProducts.filter(p => {
-            const matchesCategory = category === 'all' || p.category === category;
-            const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-            return matchesCategory && matchesSearch;
+    // Initialize counts on first load
+    setTimeout(updateCategoryCounts, 1000);
+
+    // Initial Filter Check for URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const catParam = urlParams.get('cat');
+    if (catParam) {
+        const targetBtn = document.querySelector(`[data-category="${catParam}"]`);
+        if (targetBtn) {
+            categoryFilters.forEach(b => b.classList.remove('active'));
+            targetBtn.classList.add('active');
+            setTimeout(applyAllFilters, 500);
+        }
+    }
+
+    // Filtering Logic (Override old simple filter)
+    categoryFilters.forEach(btn => {
+        btn.addEventListener('click', () => {
+            categoryFilters.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyAllFilters();
         });
-        renderProducts(filtered);
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener('input', applyAllFilters);
     }
 
     // Mobile Menu Logic

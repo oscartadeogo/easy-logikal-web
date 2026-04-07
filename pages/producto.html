@@ -238,16 +238,45 @@
         </div>
     </header>
 
-    <main class="mt-2 container" style="padding-top: 100px;">
+    <main class="mt-4 container" style="padding-top: 80px;">
         <div id="product-detail-container">
             <!-- Content loaded dynamically -->
             <div class="loader">Cargando detalles del producto...</div>
         </div>
 
+        <!-- Benefits Section -->
+        <section class="section product-benefits bg-secondary mt-4">
+            <div class="container grid-4">
+                <div class="benefit-item">
+                    <div class="benefit-icon">🚚</div>
+                    <h4>Envío Nacional</h4>
+                    <p>Logística express a toda la República Mexicana.</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">🛡️</div>
+                    <h4>Garantía Logikal</h4>
+                    <p>Protección total contra defectos de fábrica.</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">💎</div>
+                    <h4>Calidad Premium</h4>
+                    <p>Productos originales de marcas certificadas.</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">📞</div>
+                    <h4>Soporte B2B</h4>
+                    <p>Asesoría personalizada para mayoristas.</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Related Products -->
         <section class="section">
-            <h2 class="section-title">Productos <span>Relacionados</span></h2>
-            <div class="services-grid mt-2" id="related-products-container">
+            <div class="section-header flex-between mb-2">
+                <h2 class="section-title">Productos <span>Relacionados</span></h2>
+                <a href="productos.html" class="btn btn-outline btn-sm">Ver todo</a>
+            </div>
+            <div class="product-grid" id="related-products-container">
                 <!-- Related products will be loaded here -->
             </div>
         </section>
@@ -315,8 +344,9 @@
         function renderProductDetail(p) {
             const container = document.getElementById('product-detail-container');
             
-            // Gallery Images (Mock for now, will use DB gallery field)
-            const images = p.gallery || [p.image, p.image, p.image]; 
+            // Gallery Images
+            const images = p.gallery && p.gallery.length > 0 ? p.gallery : [p.image];
+            if (images.length === 1) images.push(p.image, p.image); // Mock thumbnails if only 1 image
             
             container.innerHTML = `
                 <div class="product-detail-grid">
@@ -332,80 +362,98 @@
                     </div>
 
                     <div class="product-info-detail">
-                        <nav style="font-size: 0.8rem; margin-bottom: 1rem; color: #888;">
-                            Inicio / Productos / ${p.category.toUpperCase()} / ${p.name}
+                        <nav class="breadcrumb mb-1">
+                            <a href="../index.html">Inicio</a> / <a href="productos.html">Catálogo</a> / <span>${p.category.toUpperCase()}</span>
                         </nav>
-                        <h1>${p.name}</h1>
-                        <div class="product-price-large">$${parseFloat(p.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</div>
-                        <div class="stock-status">✓ ${p.stock || 110} disponibles</div>
-                        
-                        <p class="text-muted">${p.description || 'Descubre la excelencia y el detalle en este producto premium. Ideal para coleccionistas y entusiastas.'}</p>
-
-                        <div class="shipping-info-box">
-                            <h4>Envío Gratis en Compras Mayores a $499</h4>
-                            <p style="font-size: 0.85rem; margin: 0;">Disfruta de envío gratis en toda la República Mexicana en pedidos mayores a $499 pesos.</p>
+                        <h1 class="product-title-large">${p.name}</h1>
+                        <div class="product-meta-top">
+                            <span class="sku">SKU: ${p.sku || 'N/A'}</span> | 
+                            <span class="brand">Marca: ${p.brand || 'Premium'}</span>
                         </div>
+                        
+                        <div class="product-price-large">$${parseFloat(p.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })} <span class="tax-tag">IVA Incluido</span></div>
+                        <div class="stock-status-large ${p.stock > 0 ? 'in-stock' : 'out-of-stock'}">
+                            ${p.stock > 0 ? `✓ En Stock (${p.stock} unidades)` : '✗ Agotado temporalmente'}
+                        </div>
+                        
+                        <p class="product-short-desc">${p.description || 'Descubre la excelencia en este producto premium. Ideal para importación directa y distribución mayorista.'}</p>
 
-                        <div class="quantity-selector">
+                        ${p.variants && p.variants.length > 0 ? `
+                            <div class="variants-selector mt-2">
+                                <h4>Opciones Disponibles:</h4>
+                                <div class="variant-chips">
+                                    ${p.variants.map(v => `<button class="variant-chip" onclick="selectVariant(this)">${v.color || v.size || 'Opción'}</button>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <div class="quantity-selector-modern mt-2">
+                            <div class="qty-label">Cantidad:</div>
                             <div class="qty-controls">
                                 <button onclick="updateDetailQty(-1)">-</button>
                                 <input type="number" id="detail-qty" value="1" min="1">
                                 <button onclick="updateDetailQty(1)">+</button>
                             </div>
-                            <button class="btn btn-primary" onclick="addToCartWithQty(${p.id})">Añadir al Carrito</button>
                         </div>
 
-                        <div class="product-meta">
-                            <div class="meta-item"><span class="meta-label">SKU:</span> ${p.sku || 'N/A'}</div>
-                            <div class="meta-item"><span class="meta-label">Categorías:</span> ${p.category}, Todos los productos</div>
-                            <div class="meta-item"><span class="meta-label">Marca:</span> ${p.brand || 'Premium'}</div>
+                        <div class="product-actions-modern mt-2">
+                            <button class="btn btn-primary btn-lg flex-1" onclick="addToCartWithQty(${p.id})">Añadir al Carrito</button>
+                            <a href="https://wa.me/525512345678?text=Hola,%20me%20interesa%20el%20producto:%20${encodeURIComponent(p.name)}%20(SKU:%20${p.sku || 'N/A'})" target="_blank" class="btn btn-whatsapp">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                Cotizar WhatsApp
+                            </a>
                         </div>
 
-                        <div class="mt-2">
-                            <strong>Compartir:</strong>
-                            <div class="social-share">
-                                <a href="#" class="share-btn fb">F</a>
-                                <a href="#" class="share-btn x">X</a>
-                                <a href="#" class="share-btn pin">P</a>
-                                <a href="#" class="share-btn wa">W</a>
-                            </div>
+                        <div class="product-trust-icons mt-3">
+                            <div class="trust-icon-item"><span>🔒</span> Pago Seguro</div>
+                            <div class="trust-icon-item"><span>📦</span> Distribución B2B</div>
+                            <div class="trust-icon-item"><span>🇲🇽</span> Envío a todo México</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="product-tabs">
+                <div class="product-tabs-container mt-4">
                     <div class="tab-header">
-                        <div class="tab-link active">Descripción</div>
-                        <div class="tab-link">Información Adicional</div>
+                        <div class="tab-link active" onclick="switchTab(event, 'desc')">Descripción</div>
+                        <div class="tab-link" onclick="switchTab(event, 'specs')">Especificaciones</div>
+                        <div class="tab-link" onclick="switchTab(event, 'shipping')">Logística y Envío</div>
                     </div>
-                    <div class="tab-content">
-                        <h3>${p.name}</h3>
-                        <p class="mt-1">${p.long_description || 'Este producto destaca por su durabilidad y acabado realista. Cada detalle ha sido cuidadosamente recreado para capturar la esencia de la marca. Con su estética moderna y distintiva, no solo impresionará a los entusiastas, sino que también es ideal para exhibir en cualquier colección.'}</p>
+                    <div class="tab-content" id="tab-desc">
+                        <div class="prose">
+                            ${p.long_description || p.description || 'No hay descripción detallada disponible.'}
+                        </div>
+                    </div>
+                    <div class="tab-content" id="tab-specs" style="display: none;">
+                        <table class="specs-table">
+                            <tr><td>Marca</td><td>${p.brand || 'Premium'}</td></tr>
+                            <tr><td>SKU</td><td>${p.sku || 'N/A'}</td></tr>
+                            <tr><td>Categoría</td><td>${p.category}</td></tr>
+                            <tr><td>Origen</td><td>Importación Directa</td></tr>
+                            <tr><td>Disponibilidad</td><td>Inmediata</td></tr>
+                        </table>
+                    </div>
+                    <div class="tab-content" id="tab-shipping" style="display: none;">
+                        <p>Nuestra red logística cubre todo el territorio nacional. Tiempos estimados:</p>
+                        <ul>
+                            <li><strong>CDMX y Área Metropolitana:</strong> 24-48 horas.</li>
+                            <li><strong>Interior de la República:</strong> 3-5 días hábiles.</li>
+                            <li><strong>Pedidos Mayoristas:</strong> Logística personalizada según volumen.</li>
+                        </ul>
                     </div>
                 </div>
             `;
         }
 
-        window.changeImg = (src, thumb) => {
-            document.getElementById('main-product-img').src = src;
-            document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-            thumb.classList.add('active');
+        window.selectVariant = (btn) => {
+            document.querySelectorAll('.variant-chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
         };
 
-        window.updateDetailQty = (delta) => {
-            const input = document.getElementById('detail-qty');
-            let val = parseInt(input.value) + delta;
-            if (val < 1) val = 1;
-            input.value = val;
-        };
-
-        window.addToCartWithQty = (id) => {
-            const qty = parseInt(document.getElementById('detail-qty').value);
-            // Reutilizamos lógica de cart.js
-            for(let i=0; i<qty; i++) {
-                addToCart(id);
-            }
-            alert('¡Producto añadido al carrito!');
+        window.switchTab = (e, tabId) => {
+            document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            e.target.classList.add('active');
+            document.getElementById(`tab-${tabId}`).style.display = 'block';
         };
 
         async function loadRelatedProducts(category, currentId) {
@@ -420,14 +468,21 @@
                 if (error) throw error;
 
                 const container = document.getElementById('related-products-container');
-                container.innerHTML = data.map(rp => `
-                    <div class="service-card" onclick="window.location.href='producto.html?id=${rp.id}'" style="cursor: pointer;">
-                        <div class="image-wrapper mb-1">
-                            <img src="${rp.image}" alt="${rp.name}">
+                if (data.length === 0) {
+                    container.innerHTML = '<p class="text-muted">No hay productos relacionados en esta categoría.</p>';
+                    return;
+                }
+
+                container.innerHTML = data.map(product => `
+                    <div class="product-card" onclick="window.location.href='producto.html?id=${product.id}'" style="cursor: pointer;">
+                        <div class="product-image">
+                            <img src="${product.image || 'https://via.placeholder.com/400'}" alt="${product.name}">
                         </div>
-                        <h3>${rp.name}</h3>
-                        <p class="product-price">$${parseFloat(rp.price).toLocaleString('es-MX')}</p>
-                        <button class="btn btn-outline w-100 mt-1">Añadir al Carrito</button>
+                        <div class="product-info">
+                            <span class="product-category">${product.category}</span>
+                            <h3 class="product-title">${product.name}</h3>
+                            <p class="product-price">$${parseFloat(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                        </div>
                     </div>
                 `).join('');
             } catch (error) {

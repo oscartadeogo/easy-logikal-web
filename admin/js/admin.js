@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const target = item.getAttribute('data-target');
             if (!target) return;
 
+            console.log('Cambiando a sección:', target);
+
             // Update active state
             navItems.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
@@ -31,16 +33,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.querySelectorAll('.dashboard-section').forEach(sec => {
                 sec.style.display = 'none';
             });
-            document.getElementById(target).style.display = 'block';
+            
+            const targetSection = document.getElementById(target);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
 
             if (target === 'analytics-section') {
-                initCharts();
+                loadDashboardStats();
             }
             if (target === 'orders-section') {
                 loadOrders();
             }
             if (target === 'marketing-section') {
                 loadMarketingItems();
+            }
+            if (target === 'cms-section') {
+                loadBlogPosts();
+            }
+            if (target === 'products-section') {
+                loadAdminProducts();
             }
         });
     });
@@ -230,6 +242,115 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    // BLOG CMS FUNCTIONS
+    async function loadBlogPosts() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            renderBlogTable(data);
+        } catch (error) {
+            console.error('Error cargando blog:', error);
+        }
+    }
+
+    function renderBlogTable(posts) {
+        const container = document.getElementById('cms-table-body');
+        if (!container) return;
+
+        container.innerHTML = posts.map(p => `
+            <tr>
+                <td><strong>${p.title}</strong></td>
+                <td>${new Date(p.created_at).toLocaleDateString()}</td>
+                <td><span style="color: ${p.status === 'published' ? 'green' : 'orange'};">${p.status.toUpperCase()}</span></td>
+                <td>
+                    <button class="btn btn-edit" onclick="editBlogPost(${p.id})">Editar</button>
+                    <button class="btn btn-delete" onclick="deleteBlogPost(${p.id})">Eliminar</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    const blogForm = document.getElementById('blog-form');
+    const addBlogBtn = document.querySelector('#cms-section .btn-add'); // El botón "+ Nueva Entrada"
+
+    if (addBlogBtn) {
+        addBlogBtn.addEventListener('click', () => {
+            document.getElementById('blog-modal-title').textContent = 'Nueva Entrada de Blog';
+            blogForm.reset();
+            document.getElementById('b-id').value = '';
+            openBlogModal();
+        });
+    }
+
+    if (blogForm) {
+        blogForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('b-id').value;
+            const blogData = {
+                title: document.getElementById('b-title').value,
+                summary: document.getElementById('b-summary').value,
+                content: document.getElementById('b-content').value,
+                image: document.getElementById('b-image').value,
+                category: document.getElementById('b-category').value,
+                status: document.getElementById('b-status').value
+            };
+
+            try {
+                if (id) {
+                    const { error } = await supabaseClient.from('posts').update(blogData).eq('id', id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabaseClient.from('posts').insert([blogData]);
+                    if (error) throw error;
+                }
+                closeBlogModal();
+                loadBlogPosts();
+            } catch (error) {
+                console.error('Error guardando blog:', error);
+                alert('Error al guardar blog. Asegúrate de que la tabla "posts" existe.');
+            }
+        });
+    }
+
+    window.openBlogModal = () => document.getElementById('blog-modal').style.display = 'flex';
+    window.closeBlogModal = () => document.getElementById('blog-modal').style.display = 'none';
+
+    window.editBlogPost = async (id) => {
+        try {
+            const { data, error } = await supabaseClient.from('posts').select('*').eq('id', id).single();
+            if (error) throw error;
+
+            document.getElementById('blog-modal-title').textContent = 'Editar Entrada de Blog';
+            document.getElementById('b-id').value = data.id;
+            document.getElementById('b-title').value = data.title;
+            document.getElementById('b-summary').value = data.summary;
+            document.getElementById('b-content').value = data.content;
+            document.getElementById('b-image').value = data.image || '';
+            document.getElementById('b-category').value = data.category || '';
+            document.getElementById('b-status').value = data.status;
+
+            openBlogModal();
+        } catch (error) {
+            console.error('Error cargando blog para editar:', error);
+        }
+    };
+
+    window.deleteBlogPost = async (id) => {
+        if (confirm('¿Eliminar esta entrada de blog?')) {
+            try {
+                const { error } = await supabaseClient.from('posts').delete().eq('id', id);
+                if (error) throw error;
+                loadBlogPosts();
+            } catch (error) {
+                console.error('Error al eliminar blog:', error);
+            }
+        }
+    };
+
     async function loadOrders() {
         try {
             const { data, error } = await supabaseClient
@@ -271,35 +392,102 @@ document.addEventListener('DOMContentLoaded', async () => {
         return colors[status] || 'black';
     }
 
-    // 2. Charts Initialization
-    function initCharts() {
-        const salesCtx = document.getElementById('salesChart').getContext('2d');
-        const catCtx = document.getElementById('categoryChart').getContext('2d');
+    async function loadDashboardStats() {
+        try {
+            // 1. Orders Stats
+            const { data: orders, error: ordersError } = await supabaseClient
+                .from('orders')
+                .select('total, status, created_at');
+            if (ordersError) throw ordersError;
 
-        new Chart(salesCtx, {
+            const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+            const pendingOrders = orders.filter(o => o.status === 'pending').length;
+            const avgTicket = orders.length > 0 ? totalRevenue / orders.length : 0;
+
+            document.getElementById('stat-sales').textContent = `$${totalRevenue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+            document.getElementById('stat-pending').textContent = pendingOrders;
+            document.getElementById('stat-avg').textContent = `$${avgTicket.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+
+            // 2. Low Stock Stats
+            const { data: products, error: productsError } = await supabaseClient
+                .from('products')
+                .select('name, stock, sku');
+            if (productsError) throw productsError;
+
+            const lowStockItems = products.filter(p => p.stock <= 5);
+            document.getElementById('stat-low-stock').textContent = lowStockItems.length;
+            renderLowStockAlerts(lowStockItems);
+
+            // 3. Render Chart
+            renderSalesChart(orders);
+
+        } catch (error) {
+            console.error('Error cargando estadísticas:', error);
+        }
+    }
+
+    function renderLowStockAlerts(items) {
+        const list = document.getElementById('low-stock-list');
+        if (!list) return;
+        
+        if (items.length === 0) {
+            list.innerHTML = '<li>✓ Inventario saludable</li>';
+            return;
+        }
+
+        list.innerHTML = items.map(item => `
+            <li style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+                <span>${item.name}</span>
+                <span class="stock-alert-badge">${item.stock} en stock</span>
+            </li>
+        `).join('');
+    }
+
+    function renderSalesChart(orders) {
+        const ctx = document.getElementById('salesChart');
+        if (!ctx) return;
+
+        // Group orders by date (last 7 days)
+        const labels = [];
+        const data = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+            labels.push(dateStr);
+            
+            const dayTotal = orders
+                .filter(o => new Date(o.created_at).toDateString() === date.toDateString())
+                .reduce((sum, o) => sum + (o.total || 0), 0);
+            data.push(dayTotal);
+        }
+
+        new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                labels: labels,
                 datasets: [{
-                    label: 'Ventas ($)',
-                    data: [12000, 19000, 3000, 5000, 20000, 30000],
-                    borderColor: '#C62828',
+                    label: 'Ventas Diarias ($)',
+                    data: data,
+                    borderColor: '#c62828',
+                    backgroundColor: 'rgba(198, 40, 40, 0.1)',
+                    fill: true,
                     tension: 0.4
                 }]
-            }
-        });
-
-        new Chart(catCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Maisto', 'Keter', 'IKEA', 'Logikal Plus'],
-                datasets: [{
-                    data: [45, 25, 20, 10],
-                    backgroundColor: ['#C62828', '#0A0A0A', '#FFD600', '#666666']
-                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: value => '$' + value } }
+                }
             }
         });
     }
+
+    // Cargar estadísticas iniciales
+    loadDashboardStats();
 
     // Cargar productos iniciales
     await loadAdminProducts();

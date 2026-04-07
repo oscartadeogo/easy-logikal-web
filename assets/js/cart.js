@@ -6,6 +6,9 @@
 let cart = JSON.parse(localStorage.getItem('easy_logikal_cart')) || [];
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Inject Cart Drawer if not exists
+    injectCartDrawer();
+
     const cartToggle = document.getElementById('cart-toggle');
     const cartClose = document.getElementById('cart-close');
     const cartDrawer = document.getElementById('cart-drawer');
@@ -38,6 +41,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+function injectCartDrawer() {
+    if (document.getElementById('cart-drawer')) return; // Already exists
+
+    const drawerHTML = `
+        <div class="cart-drawer" id="cart-drawer">
+            <div class="cart-drawer-header">
+                <h2>Tu Carrito</h2>
+                <button id="cart-close">&times;</button>
+            </div>
+            <div class="cart-items" id="cart-items">
+                <p class="empty-cart-msg">Tu carrito está vacío.</p>
+            </div>
+            
+            <div class="cart-customer-info" style="padding: 1rem; border-top: 1px solid var(--border);">
+                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Tus Datos</h4>
+                <div class="form-group" style="margin-bottom: 0.5rem;">
+                    <input type="text" id="cart-cust-name" placeholder="Nombre completo" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem;">
+                </div>
+                <div class="form-group">
+                    <input type="email" id="cart-cust-email" placeholder="Correo electrónico" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem;">
+                </div>
+            </div>
+
+            <div class="cart-payment-options" style="padding: 1rem; border-top: 1px solid var(--border);">
+                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Método de Pago</h4>
+                <div style="margin-bottom: 0.5rem;">
+                    <input type="radio" id="pay-card" name="payment-method" value="card" checked>
+                    <label for="pay-card" style="font-size: 0.85rem; cursor: pointer;">Tarjeta Crédito / Débito (Stripe)</label>
+                </div>
+                <div>
+                    <input type="radio" id="pay-transfer" name="payment-method" value="transfer">
+                    <label for="pay-transfer" style="font-size: 0.85rem; cursor: pointer;">Transferencia Bancaria</label>
+                </div>
+            </div>
+
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <span>Total estimado:</span>
+                    <span id="cart-total-value">$0.00</span>
+                </div>
+                <button class="btn btn-primary w-100" id="checkout-btn">Proceder al Pago</button>
+                <p class="cart-note">* Los precios son informativos para cotización.</p>
+            </div>
+        </div>
+        <div class="cart-overlay" id="cart-overlay"></div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', drawerHTML);
+}
 
 function openCart() {
     document.getElementById('cart-drawer').classList.add('open');
@@ -179,6 +231,15 @@ async function handleCheckout() {
     const checkoutBtn = document.getElementById('checkout-btn');
     const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value || 'card';
     
+    // Customer Info
+    const custName = document.getElementById('cart-cust-name')?.value;
+    const custEmail = document.getElementById('cart-cust-email')?.value;
+
+    if (!custName || !custEmail) {
+        alert('Por favor, completa tu nombre y correo para procesar la cotización.');
+        return;
+    }
+
     checkoutBtn.textContent = 'Procesando...';
     checkoutBtn.disabled = true;
 
@@ -195,8 +256,8 @@ async function handleCheckout() {
         const { data, error } = await supabaseClient
             .from('orders')
             .insert([{
-                customer_name: "Cliente Web", // En un flujo real, pediríamos estos datos
-                customer_email: "cliente@ejemplo.com",
+                customer_name: custName,
+                customer_email: custEmail,
                 items: cart,
                 total: total,
                 status: 'pending',

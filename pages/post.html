@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blog | Easy Logikal Comercialización</title>
+    <title>Blog Post | Easy Logikal Comercialización</title>
     
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,9 +19,44 @@
     <link rel="stylesheet" href="../assets/css/animations.css">
     <link rel="stylesheet" href="../assets/css/responsive.css">
     
-    <!-- GSAP -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <style>
+        .post-header {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            padding: var(--space-lg) 0;
+        }
+        .post-meta {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .post-featured-image {
+            width: 100%;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: var(--space-md);
+        }
+        .post-content {
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+        .post-content h2, .post-content h3 {
+            margin: 2rem 0 1rem;
+        }
+        .post-content p {
+            margin-bottom: 1.5rem;
+        }
+        .post-footer {
+            max-width: 800px;
+            margin: var(--space-lg) auto 0;
+            padding-top: var(--space-md);
+            border-top: 1px solid var(--border);
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -53,22 +88,10 @@
         </div>
     </header>
 
-    <main class="mt-2">
-        <section class="section">
-            <div class="container text-center">
-                <span class="section-subtitle">Actualidad y Consejos</span>
-                <h1 class="section-title">Nuestro <span>Blog</span></h1>
-                <p class="mt-1" style="max-width: 700px; margin-inline: auto;">Explora las últimas tendencias en logística, comercialización y novedades de nuestras marcas exclusivas.</p>
-            </div>
-        </section>
-
-        <section class="section bg-secondary">
-            <div class="container">
-                <div class="services-grid" id="blog-container">
-                    <div class="loader">Cargando entradas del blog...</div>
-                </div>
-            </div>
-        </section>
+    <main class="mt-2 container" style="padding-top: 100px;">
+        <article id="post-container">
+            <div class="loader">Cargando artículo...</div>
+        </article>
     </main>
 
     <!-- Footer -->
@@ -101,51 +124,48 @@
     <!-- Scripts -->
     <script src="../assets/js/main.js"></script>
     <script src="../assets/js/cart.js"></script>
-    <script src="../assets/js/animations.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const blogContainer = document.getElementById('blog-container');
-            
+            const urlParams = new URLSearchParams(window.location.search);
+            const postId = urlParams.get('id');
+            const container = document.getElementById('post-container');
+
+            if (!postId) {
+                window.location.href = 'blog.html';
+                return;
+            }
+
             try {
-                const { data: posts, error } = await supabaseClient
+                const { data: post, error } = await supabaseClient
                     .from('posts')
                     .select('*')
-                    .eq('status', 'published')
-                    .order('created_at', { ascending: false });
+                    .eq('id', postId)
+                    .single();
 
                 if (error) throw error;
 
-                if (!posts || posts.length === 0) {
-                    blogContainer.innerHTML = '<p class="text-center">No hay entradas publicadas por el momento.</p>';
-                    return;
-                }
+                document.title = `${post.title} | Blog Easy Logikal`;
 
-                blogContainer.innerHTML = posts.map(p => `
-                    <article class="service-card" data-reveal="up">
-                        <div class="image-wrapper mb-1">
-                            <img src="${p.image || 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=400'}" alt="${p.title}">
+                container.innerHTML = `
+                    <header class="post-header">
+                        <div class="post-meta">
+                            <span>${new Date(post.created_at).toLocaleDateString()}</span> | 
+                            <span>${post.category || 'General'}</span>
                         </div>
-                        <span class="product-category">${p.category || 'General'}</span>
-                        <h3>${p.title}</h3>
-                        <p>${p.summary || p.content.substring(0, 100) + '...'}</p>
-                        <a href="post.html?id=${p.id}" class="btn btn-outline mt-1 w-100">Leer más</a>
-                    </article>
-                `).join('');
-
-                // Trigger GSAP if available
-                if (window.gsap) {
-                    gsap.from('.service-card', {
-                        y: 30,
-                        opacity: 0,
-                        duration: 0.6,
-                        stagger: 0.1,
-                        ease: 'power2.out'
-                    });
-                }
+                        <h1 class="section-title">${post.title}</h1>
+                    </header>
+                    <img src="${post.image || 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=1200'}" alt="${post.title}" class="post-featured-image">
+                    <div class="post-content">
+                        ${post.content}
+                    </div>
+                    <footer class="post-footer">
+                        <a href="blog.html" class="btn btn-outline">← Volver al Blog</a>
+                    </footer>
+                `;
 
             } catch (error) {
-                console.error('Error cargando blog:', error);
-                blogContainer.innerHTML = '<p class="text-center">Error al cargar el blog. Por favor intenta más tarde.</p>';
+                console.error('Error cargando post:', error);
+                container.innerHTML = '<p class="text-center">Error al cargar el artículo.</p>';
             }
         });
     </script>
