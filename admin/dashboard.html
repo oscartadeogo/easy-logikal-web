@@ -268,6 +268,18 @@
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; }
         .form-group input, .form-group select { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; }
+
+        /* Animation Fallback & Base Styles */
+        [data-animate] {
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            [data-animate] {
+                transform: none !important;
+                opacity: 1 !important;
+                transition: none !important;
+            }
+        }
     </style>
     
     <!-- Supabase SDK -->
@@ -283,7 +295,8 @@
             <img src="../assets/img/logo.png" alt="Logo" style="width: 150px; height: auto;">
         </div>
         <ul class="nav-menu">
-            <li class="nav-item active" data-target="products-section">Productos</li>
+            <li class="nav-item active" data-target="dashboard-section">Dashboard</li>
+            <li class="nav-item" data-target="products-section">Productos</li>
             <li class="nav-item" data-target="orders-section">Pedidos</li>
             <li class="nav-item" data-target="marketing-section">Marketing</li>
             <li class="nav-item" data-target="analytics-section">Analytics</li>
@@ -295,30 +308,31 @@
     </aside>
 
     <main class="main-content">
-        <div id="products-section" class="dashboard-section">
+        <!-- New Dashboard Section -->
+        <div id="dashboard-section" class="dashboard-section">
             <div class="header">
-                <h1>Gestión de Productos</h1>
+                <h1>Dashboard de Resumen</h1>
                 <div class="user-info">Bienvenido, Admin</div>
             </div>
 
             <!-- Stats Grid -->
             <div class="stats-grid">
-                <div class="stat-card">
+                <div class="stat-card" data-animate="fade-up">
                     <h4>Ventas del Mes</h4>
                     <p id="stat-sales">$0.00</p>
                     <div class="stat-trend trend-up">▲ 12% vs mes ant.</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" data-animate="fade-up">
                     <h4>Pedidos Pendientes</h4>
                     <p id="stat-pending">0</p>
                     <div class="stat-trend">Acción requerida pronto</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" data-animate="fade-up">
                     <h4>Ticket Promedio</h4>
                     <p id="stat-avg">$0.00</p>
                     <div class="stat-trend trend-up">▲ 5% vs mes ant.</div>
                 </div>
-                <div class="stat-card alert" id="stat-low-stock-card">
+                <div class="stat-card alert" id="stat-low-stock-card" data-animate="fade-up">
                     <h4>Stock Bajo</h4>
                     <p id="stat-low-stock">0</p>
                     <div class="stat-trend trend-down">Productos en riesgo</div>
@@ -327,18 +341,24 @@
 
             <!-- Charts & Activity -->
             <div class="charts-grid">
-                <div class="card">
+                <div class="card" data-animate="fade-right">
                     <h3>Rendimiento de Ventas (30 días)</h3>
                     <div style="height: 300px;">
                         <canvas id="salesChart"></canvas>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card" data-animate="fade-left">
                     <h3>Alertas de Inventario</h3>
                     <ul class="alert-list" id="low-stock-list">
-                        <li class="loader">Analizando stock...</li>
+                        <li class="loader">✓ Inventario saludable</li>
                     </ul>
                 </div>
+            </div>
+        </div>
+
+        <div id="products-section" class="dashboard-section" style="display: none;">
+            <div class="header">
+                <h1>Gestión de Productos</h1>
             </div>
 
             <div class="card">
@@ -496,13 +516,13 @@
                     <tbody id="cms-table-body">
                         <!-- Post mock -->
                         <tr>
-                            <td>Cómo optimizar tu almacén con Keter</td>
+                            <td>Cómo optimizar tu almacén logístico</td>
                             <td>12 Mar 2026</td>
                             <td><span style="color: green;">Publicado</span></td>
                             <td><button class="btn btn-edit">Editar</button></td>
                         </tr>
                         <tr>
-                            <td>Novedades Maisto 2026</td>
+                            <td>Novedades en Distribución 2026</td>
                             <td>05 Abr 2026</td>
                             <td><span style="color: orange;">Borrador</span></td>
                             <td><button class="btn btn-edit">Editar</button></td>
@@ -528,10 +548,10 @@
                     <div class="form-group">
                         <label>Categoría</label>
                         <select id="p-category" required>
-                            <option value="maisto">Maisto</option>
-                            <option value="keter">Keter</option>
-                            <option value="ikea">IKEA</option>
-                            <option value="logikal">Logikal Plus</option>
+                            <option value="juguetes">Juguetes y Coleccionables</option>
+                            <option value="muebles">Muebles de Exterior</option>
+                            <option value="hogar">Hogar y Oficina</option>
+                            <option value="logistica">Logística Industrial</option>
                         </select>
                     </div>
                 </div>

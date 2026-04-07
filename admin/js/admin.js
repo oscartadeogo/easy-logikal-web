@@ -39,8 +39,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 targetSection.style.display = 'block';
             }
 
-            if (target === 'analytics-section') {
+            if (target === 'analytics-section' || target === 'dashboard-section') {
                 loadDashboardStats();
+                // Re-init animations for new visible elements
+                setTimeout(initDashboardAnimations, 100);
             }
             if (target === 'orders-section') {
                 loadOrders();
@@ -557,7 +559,54 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = 'index.html';
         });
     }
+    // Initial Filter Check for URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const sectionParam = urlParams.get('section');
+    if (sectionParam) {
+        const targetBtn = document.querySelector(`[data-target="${sectionParam}"]`);
+        if (targetBtn) targetBtn.click();
+    }
+
+    // Initialize Intersection Observer for Animations
+    initDashboardAnimations();
 });
+
+function initDashboardAnimations() {
+    const options = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const el = entry.target;
+                const animation = el.getAttribute('data-animate');
+                
+                // Aplicar estilos base para la animación
+                el.style.opacity = '1';
+                el.style.transform = 'translate3d(0, 0, 0)';
+                el.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+                
+                // Desactivar observación después de animar
+                observer.unobserve(el);
+            }
+        });
+    }, options);
+
+    // Configuración inicial de elementos animables
+    document.querySelectorAll('[data-animate]').forEach(el => {
+        const animation = el.getAttribute('data-animate');
+        el.style.opacity = '0';
+        el.style.willChange = 'transform, opacity';
+
+        if (animation === 'fade-up') el.style.transform = 'translate3d(0, 30px, 0)';
+        if (animation === 'fade-right') el.style.transform = 'translate3d(-30px, 0, 0)';
+        if (animation === 'fade-left') el.style.transform = 'translate3d(30px, 0, 0)';
+
+        observer.observe(el);
+    });
+}
 
 async function loadAdminProducts() {
     try {

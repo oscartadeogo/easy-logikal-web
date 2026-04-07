@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="modal-content">
                     <span class="close-modal-btn" onclick="closeQuoteModal()">&times;</span>
                     <h2>Solicitar Cotización <span>Express</span></h2>
-                    <p>Completa tus datos y un asesor te contactará en menos de 2 horas.</p>
+                    <p>Completa tus datos y un asesor te contactará en menos de 24 horas.</p>
                     <form id="quick-quote-form" class="mt-2">
                         <div class="form-group">
                             <label>Nombre Completo</label>
