@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Productos | Easy Logikal Comercialización</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/animations.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/js/supabase-client.js"></script>
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+</head>
+<body class="bg-secondary">
+    <!-- Page Loader -->
+    <div class="page-loader">
+        <div class="loader-content">
+            <div class="loader-logo">EASY LOGIKAL</div>
+            <div class="loader-bar">
+                <div class="loader-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="container header-container">
+            <a href="../index.html" class="logo">
+                <span class="logo-text">EASY LOGIKAL</span>
+                <span class="logo-sub">COMERCIALIZACIÓN</span>
+            </a>
+            
+            <nav class="nav" id="nav-menu">
+                <ul class="nav-list">
+                    <li><a href="../index.html" class="nav-link">Inicio</a></li>
+                    <li><a href="nosotros.html" class="nav-link">Nosotros</a></li>
+                    <li><a href="servicios.html" class="nav-link">Servicios</a></li>
+                    <li><a href="productos.html" class="nav-link active">Productos</a></li>
+                    <li><a href="portafolio.html" class="nav-link">Portafolio</a></li>
+                    <li><a href="blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="contacto.html" class="nav-link">Contacto</a></li>
+                </ul>
+            </nav>
+            
+            <div class="header-actions">
+                <a href="#" class="cart-icon" id="cart-toggle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    <span class="cart-count">0</span>
+                </a>
+                <a href="contacto.html" class="btn btn-primary">Cotizar</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="catalog-page mt-2">
+        <div class="container">
+            <div class="catalog-header mb-2">
+                <h1 class="section-title">Nuestro <span>Catálogo</span></h1>
+                <p class="text-muted">Explora nuestra selección exclusiva de productos premium de las mejores marcas del mundo.</p>
+            </div>
+
+            <div class="catalog-layout">
+                <!-- Sidebar Filters -->
+                <aside class="catalog-sidebar">
+                    <div class="filter-group">
+                        <h3>Categorías</h3>
+                        <ul class="filter-list" id="category-filters">
+                            <li><button class="filter-btn active" data-category="all">Todos los productos</button></li>
+                            <li><button class="filter-btn" data-category="maisto">Maisto (Modelos a escala)</button></li>
+                            <li><button class="filter-btn" data-category="keter">Keter (Almacenaje)</button></li>
+                            <li><button class="filter-btn" data-category="ikea">IKEA (Hogar)</button></li>
+                            <li><button class="filter-btn" data-category="logikal">Logikal Plus</button></li>
+                        </ul>
+                    </div>
+
+                    <div class="filter-group mt-2">
+                        <h3>Búsqueda</h3>
+                        <div class="search-box">
+                            <input type="text" id="product-search" placeholder="Buscar producto...">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Product Grid -->
+                <div class="catalog-main">
+                    <div class="product-grid" id="product-container">
+                        <!-- Products will be loaded dynamically via JS -->
+                        <div class="loader">Cargando productos...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Shopping Cart Sidebar (Drawer) -->
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-drawer-header">
+            <h2>Tu Carrito</h2>
+            <button id="cart-close">&times;</button>
+        </div>
+        <div class="cart-items" id="cart-items">
+            <!-- Cart items will be loaded here -->
+            <p class="empty-cart-msg">Tu carrito está vacío.</p>
+        </div>
+
+        <div class="cart-payment-options" style="padding: 1rem; border-top: 1px solid var(--border);">
+            <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Método de Pago</h4>
+            <div style="margin-bottom: 0.5rem;">
+                <input type="radio" id="pay-card" name="payment-method" value="card" checked>
+                <label for="pay-card" style="font-size: 0.85rem; cursor: pointer;">Tarjeta Crédito / Débito (Stripe)</label>
+            </div>
+            <div>
+                <input type="radio" id="pay-transfer" name="payment-method" value="transfer">
+                <label for="pay-transfer" style="font-size: 0.85rem; cursor: pointer;">Transferencia Bancaria</label>
+            </div>
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total estimado:</span>
+                <span id="cart-total-value">$0.00</span>
+            </div>
+            <button class="btn btn-primary w-100" id="checkout-btn">Proceder al Pago</button>
+            <p class="cart-note">* Los precios son informativos para cotización.</p>
+        </div>
+    </div>
+    <div class="cart-overlay" id="cart-overlay"></div>
+
+    <!-- Footer -->
+    <footer class="footer mt-2">
+        <div class="container footer-grid">
+            <div class="footer-info">
+                <h3 class="footer-logo">EASY LOGIKAL</h3>
+                <p>Tu socio estratégico en importación y distribución mayorista en México.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Enlaces</h4>
+                <ul>
+                    <li><a href="../index.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Nosotros</a></li>
+                    <li><a href="productos.html">Productos</a></li>
+                    <li><a href="blog.html">Blog</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4>Contacto</h4>
+                <p>Email: contacto@easylogikal.com</p>
+                <p>Tel: +52 (55) 1234 5678</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Easy Logikal Comercialización. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/cart.js"></script>
+    <script src="../assets/js/animations.js"></script>
+</body>
+</html>

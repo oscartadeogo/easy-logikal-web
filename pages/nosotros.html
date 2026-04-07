@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nosotros | Easy Logikal Comercialización</title>
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/js/supabase-client.js"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/animations.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+</head>
+<body>
+    <!-- Page Loader -->
+    <div class="page-loader">
+        <div class="loader-content">
+            <div class="loader-logo">EASY LOGIKAL</div>
+            <div class="loader-bar">
+                <div class="loader-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="container header-container">
+            <a href="../index.html" class="logo">
+                <span class="logo-text">EASY LOGIKAL</span>
+                <span class="logo-sub">COMERCIALIZACIÓN</span>
+            </a>
+            
+            <nav class="nav" id="nav-menu">
+                <ul class="nav-list">
+                    <li><a href="../index.html" class="nav-link">Inicio</a></li>
+                    <li><a href="nosotros.html" class="nav-link active">Nosotros</a></li>
+                    <li><a href="servicios.html" class="nav-link">Servicios</a></li>
+                    <li><a href="productos.html" class="nav-link">Productos</a></li>
+                    <li><a href="portafolio.html" class="nav-link">Portafolio</a></li>
+                    <li><a href="blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="contacto.html" class="nav-link">Contacto</a></li>
+                </ul>
+            </nav>
+            
+            <div class="header-actions">
+                <a href="#" class="cart-icon" id="cart-toggle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    <span class="cart-count">0</span>
+                </a>
+                <a href="contacto.html" class="btn btn-primary">Cotizar</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="mt-2">
+        <section class="section">
+            <div class="container">
+                <div class="grid-2">
+                    <div data-reveal="left">
+                        <span class="section-subtitle">Quiénes Somos</span>
+                        <h1 class="section-title">Tu socio estratégico en <span>Comercialización Global</span></h1>
+                        <p>Easy Logikal Comercialización nace con la visión de simplificar el acceso a marcas de prestigio internacional para el mercado mexicano. Con más de 15 años de experiencia, nos hemos consolidado como líderes en importación y distribución mayorista.</p>
+                        <p class="mt-1">Nuestra misión es proporcionar soluciones logísticas inteligentes y una gestión de cadena de suministro impecable, asegurando que los mejores productos lleguen a tu negocio con eficiencia y transparencia.</p>
+                    </div>
+                    <div class="image-wrapper" data-reveal="right">
+                        <img src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&q=80&w=800" alt="Equipo Easy Logikal">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section bg-secondary">
+            <div class="container text-center">
+                <h2 class="section-title" data-reveal="up">Nuestros Valores</h2>
+                <div class="services-grid mt-2">
+                    <div class="service-card" data-reveal="up">
+                        <h3>Integridad</h3>
+                        <p>Transparencia total en cada proceso aduanal y comercial.</p>
+                    </div>
+                    <div class="service-card" data-reveal="up">
+                        <h3>Eficiencia</h3>
+                        <p>Optimización constante de rutas y tiempos de entrega.</p>
+                    </div>
+                    <div class="service-card" data-reveal="up">
+                        <h3>Innovación</h3>
+                        <p>Uso de tecnología de punta para la gestión de inventarios.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-2">
+        <div class="container footer-grid">
+            <div class="footer-info">
+                <h3 class="footer-logo">EASY LOGIKAL</h3>
+                <p>Tu socio estratégico en importación y distribución mayorista en México.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Enlaces</h4>
+                <ul>
+                    <li><a href="../index.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Nosotros</a></li>
+                    <li><a href="productos.html">Productos</a></li>
+                    <li><a href="contacto.html">Contacto</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4>Contacto</h4>
+                <p>Email: contacto@easylogikal.com</p>
+                <p>Tel: +52 (55) 1234 5678</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Easy Logikal Comercialización. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/cart.js"></script>
+    <script src="../assets/js/animations.js"></script>
+</body>
+</html>

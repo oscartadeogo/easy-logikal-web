@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Logikal Comercialización | Importación y Distribución Premium</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Easy Logikal Comercialización - Expertos en importación y distribución de marcas premium como Maisto, Keter e IKEA en México.">
+    <meta name="keywords" content="comercialización, importación México, distribución mayorista, Maisto México, Keter México, logística estratégica">
+    <meta property="og:title" content="Easy Logikal Comercialización | Importación Premium">
+    <meta property="og:description" content="Tu socio estratégico para la distribución de marcas internacionales en México.">
+    <meta property="og:image" content="assets/img/og-image.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/animations.css">
+    <link rel="stylesheet" href="assets/css/responsive.css">
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/supabase-client.js"></script>
+    
+    <!-- GSAP for Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+</head>
+<body>
+    <!-- Page Loader -->
+    <div class="page-loader">
+        <div class="loader-content">
+            <div class="loader-logo">EASY LOGIKAL</div>
+            <div class="loader-bar">
+                <div class="loader-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <span class="logo-text">EASY LOGIKAL</span>
+                <span class="logo-sub">COMERCIALIZACIÓN</span>
+            </a>
+            
+            <nav class="nav" id="nav-menu">
+                <ul class="nav-list">
+                    <li><a href="index.html" class="nav-link active">Inicio</a></li>
+                    <li><a href="pages/nosotros.html" class="nav-link">Nosotros</a></li>
+                    <li><a href="pages/servicios.html" class="nav-link">Servicios</a></li>
+                    <li><a href="pages/productos.html" class="nav-link">Productos</a></li>
+                    <li><a href="pages/portafolio.html" class="nav-link">Portafolio</a></li>
+                    <li><a href="pages/blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="pages/contacto.html" class="nav-link">Contacto</a></li>
+                </ul>
+            </nav>
+            
+            <div class="header-actions">
+                <a href="#" class="cart-icon" id="cart-toggle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    <span class="cart-count">0</span>
+                </a>
+                <a href="pages/contacto.html" class="btn btn-primary">Cotizar</a>
+                <button class="nav-toggle" id="nav-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="container">
+                <div class="hero-content">
+                    <h1 class="hero-title">Excelencia en <br><span>Comercialización</span></h1>
+                    <p class="hero-description">Conectamos marcas globales con el mercado mexicano a través de soluciones logísticas inteligentes y una red de distribución de clase mundial.</p>
+                    <div class="hero-btns">
+                        <a href="pages/productos.html" class="btn btn-primary">Ver Catálogo</a>
+                        <a href="pages/nosotros.html" class="btn btn-outline">Conócenos</a>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image-overlay"></div>
+        </section>
+
+        <!-- About Summary -->
+        <section class="section about-summary">
+            <div class="container grid-2">
+                <div class="about-text" data-reveal="left">
+                    <span class="section-subtitle">Nuestra Trayectoria</span>
+                    <h2 class="section-title">Más de 15 años liderando la <span>Logística de Importación</span></h2>
+                    <p>En Easy Logikal Comercialización, no solo movemos productos; construimos puentes entre la innovación global y el mercado mexicano. Nuestra especialización en marcas premium nos permite ofrecer un catálogo exclusivo con la garantía de un servicio eficiente y personalizado.</p>
+                    <div class="stats-grid mt-2">
+                        <div class="stat-item">
+                            <span class="stat-num">15+</span>
+                            <span class="stat-label">Años de Experiencia</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-num">500+</span>
+                            <span class="stat-label">Clientes Mayoristas</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-num">10k+</span>
+                            <span class="stat-label">Productos Entregados</span>
+                        </div>
+                    </div>
+                    <a href="pages/nosotros.html" class="btn btn-outline mt-2">Saber más sobre nosotros</a>
+                </div>
+                <div class="about-image" data-reveal="right">
+                    <div class="image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=800" alt="Logística y Almacén">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Featured Services -->
+        <section class="section services-summary bg-secondary">
+            <div class="container">
+                <div class="text-center mb-2" data-reveal="up">
+                    <span class="section-subtitle">Lo que hacemos</span>
+                    <h2 class="section-title">Soluciones Integrales para tu <span>Negocio</span></h2>
+                </div>
+                <div class="services-grid">
+                    <div class="service-card" data-reveal="up">
+                        <div class="service-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                        </div>
+                        <h3>Importación Directa</h3>
+                        <p>Gestionamos todo el proceso aduanal y legal para traer las mejores marcas del mundo a tus manos.</p>
+                    </div>
+                    <div class="service-card" data-reveal="up">
+                        <div class="service-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                        </div>
+                        <h3>Distribución Nacional</h3>
+                        <p>Red logística optimizada con tiempos de entrega récord en toda la República Mexicana.</p>
+                    </div>
+                    <div class="service-card" data-reveal="up">
+                        <div class="service-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                        </div>
+                        <h3>Atención Mayorista</h3>
+                        <p>Precios competitivos y soporte especializado para distribuidores y grandes superficies.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="section cta-banner">
+            <div class="container text-center">
+                <h2 data-reveal="up">¿Listo para escalar tu inventario?</h2>
+                <p data-reveal="up" class="mt-1">Únete a nuestra red de distribuidores y accede a precios exclusivos en las mejores marcas.</p>
+                <div class="mt-2" data-reveal="up">
+                    <a href="pages/contacto.html" class="btn btn-primary">Convertirse en Distribuidor</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Shopping Cart Sidebar (Drawer) -->
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-drawer-header">
+            <h2>Tu Carrito</h2>
+            <button id="cart-close">&times;</button>
+        </div>
+        <div class="cart-items" id="cart-items">
+            <!-- Cart items will be loaded here -->
+            <p class="empty-cart-msg">Tu carrito está vacío.</p>
+        </div>
+        
+        <div class="cart-payment-options" style="padding: 1rem; border-top: 1px solid var(--border);">
+            <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Método de Pago</h4>
+            <div style="margin-bottom: 0.5rem;">
+                <input type="radio" id="pay-card-main" name="payment-method" value="card" checked>
+                <label for="pay-card-main" style="font-size: 0.85rem; cursor: pointer;">Tarjeta Crédito / Débito (Stripe)</label>
+            </div>
+            <div>
+                <input type="radio" id="pay-transfer-main" name="payment-method" value="transfer">
+                <label for="pay-transfer-main" style="font-size: 0.85rem; cursor: pointer;">Transferencia Bancaria</label>
+            </div>
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total estimado:</span>
+                <span id="cart-total-value">$0.00</span>
+            </div>
+            <button class="btn btn-primary w-100" id="checkout-btn">Proceder al Pago</button>
+            <p class="cart-note">* Los precios son informativos para cotización.</p>
+        </div>
+    </div>
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <footer class="footer">
+        <div class="container footer-grid">
+            <div class="footer-info">
+                <h3 class="footer-logo">EASY LOGIKAL</h3>
+                <p>Tu socio estratégico en importación y distribución mayorista en México.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Enlaces</h4>
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="pages/nosotros.html">Nosotros</a></li>
+                    <li><a href="pages/productos.html">Productos</a></li>
+                    <li><a href="pages/blog.html">Blog</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4>Contacto</h4>
+                <p>Email: contacto@easylogikal.com</p>
+                <p>Tel: +52 (55) 1234 5678</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Easy Logikal Comercialización. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/animations.js"></script>
+</body>
+</html>

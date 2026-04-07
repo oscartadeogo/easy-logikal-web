@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Admin Easy Logikal</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #C62828;
+            --secondary: #0A0A0A;
+            --sidebar-w: 260px;
+            --bg: #F8F9FA;
+            --border: #E9ECEF;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            background-color: var(--bg);
+            display: flex;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-w);
+            height: 100vh;
+            background-color: var(--secondary);
+            color: white;
+            position: fixed;
+            padding: 2rem 1rem;
+        }
+        .sidebar h2 {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+        }
+        .nav-item {
+            padding: 0.8rem 1rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .logout {
+            position: absolute;
+            bottom: 2rem;
+            width: calc(100% - 2rem);
+            padding: 0.8rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            padding: 2rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .stat-card h4 {
+            margin: 0;
+            color: #666;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+        .stat-card p {
+            margin: 0.5rem 0 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        /* Table */
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 2px solid var(--border);
+            color: #666;
+            font-size: 0.9rem;
+        }
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-add { background: var(--primary); color: white; }
+        .btn-edit { background: #E3F2FD; color: #1976D2; margin-right: 0.5rem; }
+        .btn-delete { background: #FFEBEE; color: #D32F2F; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; }
+        .form-group input, .form-group select { width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/js/supabase-client.js"></script>
+    
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>EASY LOGIKAL</h2>
+        <ul class="nav-menu">
+            <li class="nav-item active" data-target="products-section">Productos</li>
+            <li class="nav-item" data-target="orders-section">Pedidos</li>
+            <li class="nav-item" data-target="analytics-section">Analytics</li>
+            <li class="nav-item" data-target="cms-section">CMS Blog</li>
+            <li class="nav-item">Configuración</li>
+        </ul>
+        <button class="logout" id="logout-btn">Cerrar Sesión</button>
+    </aside>
+
+    <main class="main-content">
+        <div id="products-section" class="dashboard-section">
+            <div class="header">
+                <h1>Gestión de Productos</h1>
+                <div class="user-info">Bienvenido, Admin</div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Total Productos</h4>
+                    <p id="total-products">0</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Categorías</h4>
+                    <p>4</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Stock Crítico</h4>
+                    <p>2</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Valor Inventario</h4>
+                    <p>$450k</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="table-header">
+                    <h3>Listado de Productos</h3>
+                    <button class="btn btn-add" id="add-product-btn">+ Nuevo Producto</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-table-body">
+                        <!-- Products will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="analytics-section" class="dashboard-section" style="display: none;">
+            <div class="header">
+                <h1>Reportes y Analytics</h1>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Ventas Mensuales</h3>
+                    <canvas id="salesChart"></canvas>
+                </div>
+                <div class="card">
+                    <h3>Categorías más vendidas</h3>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="cms-section" class="dashboard-section" style="display: none;">
+            <div class="header">
+                <h1>Gestión de Contenido (CMS)</h1>
+                <button class="btn btn-add">+ Nueva Entrada de Blog</button>
+            </div>
+            <div class="card mt-2">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Cómo optimizar tu almacén con Keter</td>
+                            <td>12 Mar 2026</td>
+                            <td><span style="color: green;">Publicado</span></td>
+                            <td><button class="btn btn-edit">Editar</button></td>
+                        </tr>
+                        <tr>
+                            <td>Novedades Maisto 2026</td>
+                            <td>05 Abr 2026</td>
+                            <td><span style="color: orange;">Borrador</span></td>
+                            <td><button class="btn btn-edit">Editar</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Add/Edit -->
+    <div class="modal" id="product-modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Agregar Producto</h2>
+            <form id="product-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <label>Nombre del Producto</label>
+                    <input type="text" id="p-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="p-category" required>
+                        <option value="maisto">Maisto</option>
+                        <option value="keter">Keter</option>
+                        <option value="ikea">IKEA</option>
+                        <option value="logikal">Logikal Plus</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Precio ($)</label>
+                    <input type="number" id="p-price" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>URL Imagen</label>
+                    <input type="text" id="p-image" placeholder="https://...">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" style="flex: 1; background: #eee;" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-add" style="flex: 1;">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
