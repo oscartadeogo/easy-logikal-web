@@ -166,39 +166,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
-
-// Global Tracking Function
-async function trackOrder() {
-    const input = document.getElementById('tracking-input');
-    const resultDiv = document.getElementById('tracking-result');
-    
-    if (!input || !input.value) {
-        alert('Por favor ingresa un ID de pedido.');
-        return;
-    }
-
-    resultDiv.style.display = 'block';
-    resultDiv.innerHTML = 'Buscando pedido...';
-
-    try {
-        const { data, error } = await supabaseClient
-            .from('orders')
-            .select('*')
-            .eq('id', input.value)
-            .single();
-
-        if (error || !data) {
-            resultDiv.innerHTML = '<span style="color: red;">Pedido no encontrado. Verifica el ID.</span>';
-            return;
-        }
-
-        resultDiv.innerHTML = `
-            <strong>Estado:</strong> ${data.status.toUpperCase()}<br>
-            <strong>Cliente:</strong> ${data.customer_name}<br>
-            <strong>Total:</strong> $${parseFloat(data.total).toLocaleString('es-MX')}<br>
-            <strong>Actualizado:</strong> ${new Date(data.created_at).toLocaleDateString()}
-        `;
-    } catch (err) {
-        resultDiv.innerHTML = 'Error al conectar con el sistema de rastreo.';
-    }
-}
