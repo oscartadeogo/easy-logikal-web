@@ -351,10 +351,32 @@
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
         }
         .modal-content {
             max-width: 800px;
+            padding: 2.5rem;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+        .form-group label {
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 0.6rem;
+            display: block;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--primary);
+            outline: none;
         }
     </style>
     
@@ -791,8 +813,17 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Galería (URLs separadas por coma)</label>
-                        <textarea id="p-gallery" rows="2" placeholder="url1, url2, url3"></textarea>
+                        <label>Galería de Imágenes</label>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <input type="text" id="p-gallery-input" placeholder="Añade una URL o sube una imagen..." style="flex: 1;">
+                            <input type="file" id="p-file-gallery" accept="image/*" style="display: none;" onchange="handleGalleryUpload(this)">
+                            <button type="button" class="btn" style="background: #666; color: white;" onclick="document.getElementById('p-file-gallery').click()">Subir</button>
+                            <button type="button" class="btn btn-add" onclick="addUrlToGallery()">Añadir</button>
+                        </div>
+                        <div id="gallery-preview-container" style="display: flex; gap: 0.5rem; flex-wrap: wrap; background: #eee; padding: 0.5rem; border-radius: 6px; min-height: 50px;">
+                            <!-- Gallery items will appear here -->
+                        </div>
+                        <input type="hidden" id="p-gallery">
                     </div>
 
                     <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 1rem;">

@@ -380,8 +380,61 @@ window.permanentDeleteProduct = async (id) => {
     }
 };
 
+// --- GALLERY MANAGEMENT ---
+window.addUrlToGallery = () => {
+    const input = document.getElementById('p-gallery-input');
+    const url = input.value.trim();
+    if (url) {
+        addToGalleryList(url);
+        input.value = '';
+    }
+};
+
+window.handleGalleryUpload = (input) => {
+    const file = input.files[0];
+    if (!file) return;
+
+    // Use existing image processing
+    handleImageProcessing(input, 'p-gallery-input', (processedUrl) => {
+        addToGalleryList(processedUrl);
+        document.getElementById('p-gallery-input').value = '';
+    });
+};
+
+function addToGalleryList(url) {
+    const container = document.getElementById('gallery-preview-container');
+    const galleryInput = document.getElementById('p-gallery');
+    
+    let currentGallery = galleryInput.value ? galleryInput.value.split(',').filter(u => u.trim() !== '') : [];
+    if (currentGallery.includes(url)) return;
+
+    currentGallery.push(url);
+    galleryInput.value = currentGallery.join(',');
+    renderGalleryPreview();
+}
+
+window.removeFromGallery = (url) => {
+    const galleryInput = document.getElementById('p-gallery');
+    let currentGallery = galleryInput.value.split(',').filter(u => u !== url && u.trim() !== '');
+    galleryInput.value = currentGallery.join(',');
+    renderGalleryPreview();
+};
+
+function renderGalleryPreview() {
+    const container = document.getElementById('gallery-preview-container');
+    const galleryInput = document.getElementById('p-gallery');
+    const urls = galleryInput.value ? galleryInput.value.split(',').filter(u => u.trim() !== '') : [];
+
+    container.innerHTML = urls.map(url => `
+        <div style="position: relative; width: 60px; height: 60px; border-radius: 4px; overflow: hidden; border: 1px solid #ccc; background: white;">
+            <img src="${url}" style="width: 100%; height: 100%; object-fit: cover;">
+            <span onclick="removeFromGallery('${url}')" style="position: absolute; top: 0; right: 0; background: rgba(255,0,0,0.7); color: white; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; font-weight: bold;">×</span>
+        </div>
+    `).join('');
+}
+
 // --- IMAGE PROCESSING (CANVAS) ---
-window.handleImageProcessing = (input, targetId) => {
+window.handleImageProcessing = (input, targetId, callback = null) => {
     const file = input.files[0];
     if (!file) return;
 
@@ -402,11 +455,13 @@ window.handleImageProcessing = (input, targetId) => {
                 const proceed = await showImageConfirmModal(file.size, img.width, img.height);
                 if (proceed) {
                     const optimizedBase64 = processImage(img);
-                    document.getElementById(targetId).value = optimizedBase64;
+                    if (callback) callback(optimizedBase64);
+                    else document.getElementById(targetId).value = optimizedBase64;
                     alert('Imagen optimizada correctamente.');
                 }
             } else {
-                document.getElementById(targetId).value = e.target.result;
+                if (callback) callback(e.target.result);
+                else document.getElementById(targetId).value = e.target.result;
             }
         };
         img.src = e.target.result;
@@ -532,6 +587,8 @@ function setupProductEventListeners() {
         document.getElementById('edit-id').value = '';
         document.getElementById('p-badge').value = '';
         document.getElementById('p-free-shipping').checked = false;
+        document.getElementById('p-gallery').value = '';
+        document.getElementById('gallery-preview-container').innerHTML = '';
         document.getElementById('variants-editor-container').innerHTML = '';
         switchModalTab('tab-general');
         openModal();
@@ -633,6 +690,7 @@ window.editProduct = (id) => {
     document.getElementById('p-badge').value = p.badge || '';
     document.getElementById('p-tags').value = (p.tags || []).join(', ');
     document.getElementById('p-gallery').value = (p.gallery || []).join(', ');
+    renderGalleryPreview();
     
     // Shipping info
     const shipping = p.shipping_info || { free_shipping: false };
