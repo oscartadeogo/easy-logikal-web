@@ -280,6 +280,35 @@
                 transition: none !important;
             }
         }
+
+        /* Bulk Editor & Variants Styles */
+        .variant-item {
+            background: white;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+        }
+        .variant-item .remove-variant {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            color: #ff5252;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .bulk-actions-bar {
+            background: #E3F2FD;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
     </style>
     
     <!-- Supabase SDK -->
@@ -288,6 +317,9 @@
     
     <!-- Chart.js for Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
     <aside class="sidebar">
@@ -358,21 +390,30 @@
 
         <div id="products-section" class="dashboard-section" style="display: none;">
             <div class="header">
-                <h1>Gestión de Productos</h1>
+                <h1>Gestión de Productos (<span id="total-products">0</span>)</h1>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn" style="background: #E8F5E9; color: #2E7D32;" id="export-excel-btn">📊 Exportar Excel</button>
+                    <button class="btn" style="background: #FFF3E0; color: #E65100;" id="bulk-edit-btn">✏️ Editor Masivo</button>
+                    <button class="btn btn-add" id="add-product-btn">+ Nuevo Producto</button>
+                </div>
             </div>
 
             <div class="card">
                 <div class="table-header">
                     <h3>Listado de Productos</h3>
-                    <button class="btn btn-add" id="add-product-btn">+ Nuevo Producto</button>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <input type="text" id="admin-product-search" placeholder="Buscar por nombre o SKU..." style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; width: 250px;">
+                    </div>
                 </div>
                 <table>
                     <thead>
                         <tr>
+                            <th><input type="checkbox" id="select-all-products"></th>
                             <th>ID</th>
                             <th>Producto</th>
                             <th>Categoría</th>
                             <th>Precio</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -380,6 +421,29 @@
                         <!-- Products will be injected here -->
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Section for Deleted Products -->
+            <div class="mt-2" style="border-top: 1px solid #eee; padding-top: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleDeletedSection()">
+                    <h3 style="color: #666; font-size: 1rem;">🗑️ Productos Eliminados / Papelera</h3>
+                    <span id="deleted-toggle-icon">▼</span>
+                </div>
+                <div id="deleted-products-container" style="display: none; margin-top: 1rem;" class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Producto</th>
+                                <th>Precio</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deleted-product-table-body">
+                            <!-- Deleted products here -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -623,21 +687,41 @@
                     <label>Descripción del Producto</label>
                     <textarea id="p-desc" rows="6" placeholder="Escribe aquí los detalles técnicos y comerciales del producto..."></textarea>
                 </div>
-                <div class="form-group">
-                    <label>Etiquetas (Separadas por coma)</label>
-                    <input type="text" id="p-tags" placeholder="naranja, negro, f1">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select id="p-status">
+                            <option value="active">Activo / Visible</option>
+                            <option value="paused">Pausado / Oculto</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Etiquetas (Separadas por coma)</label>
+                        <input type="text" id="p-tags" placeholder="naranja, negro, f1">
+                    </div>
                 </div>
+
+                <div class="form-group" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h4 style="margin:0; font-size: 0.9rem;">Variantes (Color, Fotos, Stock)</h4>
+                        <button type="button" class="btn" style="background: var(--secondary); color: white; padding: 4px 10px; font-size: 0.8rem;" onclick="addNewVariant()">+ Agregar Color</button>
+                    </div>
+                    <div id="variants-editor-container" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <!-- Variants will be added here -->
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>URL Imagen Principal</label>
-                    <input type="text" id="p-image" placeholder="https://...">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="p-image" placeholder="https://..." style="flex: 1;">
+                        <input type="file" id="p-file-main" accept="image/*" style="display: none;" onchange="handleImageProcessing(this, 'p-image')">
+                        <button type="button" class="btn" style="background: #666; color: white;" onclick="document.getElementById('p-file-main').click()">Subir</button>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Galería (URLs separadas por coma)</label>
+                    <label>Galería General (URLs separadas por coma)</label>
                     <textarea id="p-gallery" rows="2" placeholder="url1, url2, url3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Variantes (JSON)</label>
-                    <textarea id="p-variants" placeholder='[{"color": "rojo", "talla": "XL"}]' rows="1"></textarea>
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 1.5rem; position: sticky; bottom: -2.5rem; background: white; padding: 1rem 0; border-top: 1px solid #eee;">
                     <button type="button" class="btn" style="flex: 1; background: #eee;" onclick="closeModal()">Cancelar</button>
@@ -761,6 +845,63 @@
                     <button type="submit" class="btn btn-add" style="flex: 1;">Crear Usuario</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal for Bulk Editor -->
+    <div class="modal" id="bulk-edit-modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal-btn" onclick="closeBulkModal()">&times;</span>
+            <h2>Editor Masivo de Productos</h2>
+            <p id="bulk-count-label">Seleccionados: 0 productos</p>
+            
+            <div class="bulk-actions-bar mt-2">
+                <div class="form-group" style="margin:0; flex:1;">
+                    <label>Acción a realizar:</label>
+                    <select id="bulk-action-type" onchange="updateBulkUI()">
+                        <option value="price">Actualizar Precio</option>
+                        <option value="stock">Actualizar Stock</option>
+                        <option value="category">Cambiar Categoría</option>
+                        <option value="status">Cambiar Estado (Activar/Pausar)</option>
+                        <option value="delete">Eliminar (Mover a Papelera)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin:0; flex:1;" id="bulk-value-container">
+                    <label id="bulk-value-label">Nuevo Valor:</label>
+                    <input type="text" id="bulk-value-input">
+                    <select id="bulk-select-input" style="display:none;"></select>
+                </div>
+            </div>
+
+            <div id="bulk-preview-container" style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; padding: 1rem; margin-top: 1rem;">
+                <table style="font-size: 0.8rem;">
+                    <thead>
+                        <tr><th>Producto</th><th>Valor Actual</th><th>Nuevo Valor</th></tr>
+                    </thead>
+                    <tbody id="bulk-preview-body"></tbody>
+                </table>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="button" class="btn" style="flex: 1; background: #eee;" onclick="closeBulkModal()">Cancelar</button>
+                <button type="button" class="btn btn-add" style="flex: 1; background: #E65100;" onclick="applyBulkChanges()">Aplicar Cambios Masivos</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Image Processing Confirmation -->
+    <div class="modal" id="image-confirm-modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <h3 id="image-confirm-title">Optimización de Imagen</h3>
+            <p id="image-confirm-msg">La imagen excede los 500px o el peso permitido. ¿Deseas que el sistema la redimensione y optimice automáticamente?</p>
+            <div id="image-preview-compare" style="display: flex; gap: 1rem; justify-content: center; margin: 1rem 0;">
+                <div><small>Original</small><div id="orig-size"></div></div>
+                <div><small>Optimizado</small><div id="opt-size"></div></div>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn" style="flex: 1; background: #eee;" onclick="resolveImageProcess(false)">No, cancelar</button>
+                <button class="btn btn-add" style="flex: 1;" onclick="resolveImageProcess(true)">Sí, optimizar</button>
+            </div>
         </div>
     </div>
 

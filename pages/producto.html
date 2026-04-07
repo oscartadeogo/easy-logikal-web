@@ -410,9 +410,11 @@
 
                         ${p.variants && p.variants.length > 0 ? `
                             <div class="variants-selector mt-2">
-                                <h4>Opciones Disponibles:</h4>
+                                <h4>Colores Disponibles:</h4>
                                 <div class="variant-chips">
-                                    ${p.variants.map(v => `<button class="variant-chip" onclick="selectVariant(this)">${v.color || v.size || 'Opción'}</button>`).join('')}
+                                    ${p.variants.map((v, i) => `
+                                        <button class="variant-chip" onclick="selectVariant(this, '${v.image}', ${v.stock})">${v.color}</button>
+                                    `).join('')}
                                 </div>
                             </div>
                         ` : ''}
@@ -468,9 +470,26 @@
             `;
         }
 
-        window.selectVariant = (btn) => {
+        window.selectVariant = (btn, imageUrl, stock) => {
             document.querySelectorAll('.variant-chip').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
+
+            // Update main image if variant has one
+            if (imageUrl && imageUrl !== 'undefined' && imageUrl !== '') {
+                document.getElementById('main-product-img').src = imageUrl;
+            }
+
+            // Update stock status
+            const stockEl = document.querySelector('.stock-status-large');
+            if (stockEl) {
+                if (stock > 0) {
+                    stockEl.className = 'stock-status-large in-stock';
+                    stockEl.textContent = `✓ En Stock (${stock} unidades)`;
+                } else {
+                    stockEl.className = 'stock-status-large out-of-stock';
+                    stockEl.textContent = '✗ Agotado temporalmente';
+                }
+            }
         };
 
         window.switchTab = (e, tabId) => {
@@ -486,6 +505,7 @@
                     .from('products')
                     .select('*')
                     .eq('category', category)
+                    .eq('status', 'active')
                     .neq('id', currentId)
                     .limit(4);
 

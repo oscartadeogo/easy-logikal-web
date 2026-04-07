@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data, error } = await supabaseClient
                 .from('products')
                 .select('*')
+                .eq('status', 'active')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -145,6 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data, error } = await supabaseClient
                 .from('products')
                 .select('*')
+                .eq('status', 'active')
                 .limit(4); // Load first 4 for home
 
             if (error) throw error;

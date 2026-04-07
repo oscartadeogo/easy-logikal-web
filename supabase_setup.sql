@@ -14,8 +14,10 @@ CREATE TABLE IF NOT EXISTS products (
     stock INTEGER DEFAULT 0,
     image TEXT, -- URL de imagen principal
     gallery TEXT[], -- Array de URLs de imágenes secundarias
-    variants JSONB DEFAULT '[]', -- Variantes como [{color: 'rojo', size: 'grande'}]
-    badge TEXT -- 'Nuevo', 'Oferta', 'Más Vendido'
+    variants JSONB DEFAULT '[]', -- Variantes mejoradas: [{color: 'rojo', images: ['url1', 'url2'], price: 100, stock: 10}]
+    badge TEXT, -- 'Nuevo', 'Oferta', 'Más Vendido'
+    status TEXT DEFAULT 'active', -- 'active', 'paused', 'deleted'
+    shipping_info JSONB DEFAULT '{"free_shipping": false, "cost": 0}' -- Información de envío
 );
 
 -- 2. Tabla de ENTRADAS DE BLOG (CMS)
