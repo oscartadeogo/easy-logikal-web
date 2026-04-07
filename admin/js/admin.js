@@ -380,6 +380,30 @@ window.permanentDeleteProduct = async (id) => {
     }
 };
 
+// --- UI HELPERS ---
+window.toggleUrlInput = (id) => {
+    const container = document.getElementById(id);
+    container.style.display = container.style.display === 'block' ? 'none' : 'block';
+};
+
+window.updateMainPreview = (url) => {
+    const preview = document.getElementById('main-image-preview');
+    const uploadText = document.querySelector('#main-image-dropzone .upload-text');
+    const uploadIcon = document.querySelector('#main-image-dropzone .upload-icon');
+    
+    if (url) {
+        preview.src = url;
+        preview.style.display = 'block';
+        uploadText.style.display = 'none';
+        uploadIcon.style.display = 'none';
+        document.getElementById('p-image').value = url;
+    } else {
+        preview.style.display = 'none';
+        uploadText.style.display = 'block';
+        uploadIcon.style.display = 'block';
+    }
+};
+
 // --- CATEGORY TOGGLE ---
 window.toggleCustomCategory = () => {
     const select = document.getElementById('p-category');
@@ -391,6 +415,33 @@ window.toggleCustomCategory = () => {
         customInput.style.display = 'none';
     }
 };
+
+// --- DRAG AND DROP ---
+function setupDropzone(id, onFile) {
+    const zone = document.getElementById(id);
+    if (!zone) return;
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
+        zone.addEventListener(name, e => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(name => {
+        zone.addEventListener(name, () => zone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(name => {
+        zone.addEventListener(name, () => zone.classList.remove('dragover'), false);
+    });
+
+    zone.addEventListener('drop', e => {
+        const dt = e.dataTransfer;
+        const file = dt.files[0];
+        if (file) onFile(file);
+    }, false);
+}
 
 // --- GALLERY MANAGEMENT ---
 window.addUrlToGallery = () => {
@@ -614,10 +665,34 @@ function setupProductEventListeners() {
         document.getElementById('p-category-custom').style.display = 'none';
         document.getElementById('p-category-custom').value = '';
 
-        document.getElementById('gallery-preview-container').innerHTML = '';
+        // Reset image previews
+        updateMainPreview('');
+        document.getElementById('main-url-container').style.display = 'none';
+        document.getElementById('gallery-url-container').style.display = 'none';
+
+        document.getElementById('gallery-preview-container').innerHTML = '<small style="color:#999; width:100%; text-align:center; padding: 1rem;">No hay imágenes en la galería</small>';
         document.getElementById('variants-editor-container').innerHTML = '';
         switchModalTab('tab-general');
         openModal();
+    });
+
+    // Drag & Drop Listeners
+    setupDropzone('main-image-dropzone', (file) => {
+        const dummyInput = { files: [file] };
+        handleImageProcessing(dummyInput, 'p-image', updateMainPreview);
+    });
+
+    setupDropzone('gallery-dropzone', (file) => {
+        const dummyInput = { files: [file] };
+        handleGalleryUpload(dummyInput);
+    });
+
+    // Add Enter listener for gallery URL
+    document.getElementById('p-gallery-input')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addUrlToGallery();
+        }
     });
 
     // Tab Switching Logic
@@ -725,6 +800,7 @@ window.editProduct = (id) => {
     }
 
     document.getElementById('p-price').value = p.price;
+    updateMainPreview(p.image);
     document.getElementById('p-image').value = p.image;
     document.getElementById('p-sku').value = p.sku || '';
     document.getElementById('p-brand').value = p.brand || '';
