@@ -473,14 +473,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         `).join('');
 
-        // GSAP Reveal for Catalog
+        // GSAP Reveal for Catalog (Optimized)
         if (window.gsap) {
             gsap.from('.product-card', {
-                y: 30,
+                scrollTrigger: {
+                    trigger: productContainer,
+                    start: 'top 90%'
+                },
+                y: 20,
                 opacity: 0,
-                duration: 0.6,
-                stagger: 0.05,
-                ease: 'power2.out'
+                duration: 0.5,
+                stagger: 0.03,
+                ease: 'power1.out',
+                clearProps: 'all'
             });
         }
     }
@@ -537,3 +542,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
+
+// Remove Blog logic if exists
+function initBlog() {
+    // Deleted system
+}

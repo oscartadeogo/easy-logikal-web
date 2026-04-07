@@ -52,7 +52,6 @@ function setupNavigation() {
             if (target === 'analytics-section' || target === 'dashboard-section') loadDashboardStats();
             if (target === 'orders-section') loadOrders();
             if (target === 'marketing-section') loadMarketingItems();
-            if (target === 'cms-section') loadBlogPosts();
             if (target === 'products-section') loadAdminProducts();
         });
     });
@@ -1028,26 +1027,6 @@ async function loadMarketingItems() {
                 <td>
                     <button class="btn btn-edit" onclick="editMarketingItem('${item.id}')">Editar</button>
                     <button class="btn btn-delete" onclick="deleteMarketingItem('${item.id}')">Eliminar</button>
-                </td>
-            </tr>
-        `).join('');
-    } catch (e) { console.error(e); }
-}
-
-async function loadBlogPosts() {
-    try {
-        const { data, error } = await supabaseClient.from('posts').select('*').order('created_at', { ascending: false });
-        if (error) throw error;
-        const container = document.getElementById('cms-table-body');
-        if (!container) return;
-        container.innerHTML = data.map(p => `
-            <tr>
-                <td><strong>${p.title}</strong></td>
-                <td>${new Date(p.created_at).toLocaleDateString()}</td>
-                <td><span style="color: ${p.status === 'published' ? 'green' : 'orange'};">${p.status.toUpperCase()}</span></td>
-                <td>
-                    <button class="btn btn-edit" onclick="editBlogPost(${p.id})">Editar</button>
-                    <button class="btn btn-delete" onclick="deleteBlogPost(${p.id})">Eliminar</button>
                 </td>
             </tr>
         `).join('');

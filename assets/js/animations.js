@@ -78,33 +78,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 4. Scroll Reveal Animations (Enhanced)
+    // 4. Scroll Reveal Animations (Optimized)
     const revealItems = document.querySelectorAll('[data-reveal]');
     revealItems.forEach(item => {
         const direction = item.getAttribute('data-reveal');
         let x = 0, y = 0;
         
-        if (direction === 'left') x = -80;
-        if (direction === 'right') x = 80;
-        if (direction === 'up') y = 60;
-        if (direction === 'down') y = -60;
+        if (direction === 'left') x = -40;
+        if (direction === 'right') x = 40;
+        if (direction === 'up') y = 30;
+        if (direction === 'down') y = -30;
 
         gsap.from(item, {
             scrollTrigger: {
                 trigger: item,
-                start: 'top 85%',
+                start: 'top 92%',
                 toggleActions: 'play none none none'
             },
             x: x,
             y: y,
             opacity: 0,
-            duration: 1.2,
-            ease: 'expo.out'
+            duration: 0.8,
+            ease: 'power2.out',
+            clearProps: 'all'
         });
     });
 
-    // 5. Image Reveal Interaction
-    const imgWrappers = document.querySelectorAll('.image-wrapper');
+    // 5. Image Reveal Interaction (Cleaned Up)
+    const imgWrappers = document.querySelectorAll('.image-wrapper:not(.no-reveal)');
     imgWrappers.forEach(wrapper => {
         const overlay = document.createElement('div');
         overlay.className = 'reveal-img-overlay';
@@ -115,11 +116,11 @@ document.addEventListener('DOMContentLoaded', () => {
         gsap.to(overlay, {
             scrollTrigger: {
                 trigger: wrapper,
-                start: 'top 80%',
+                start: 'top 85%',
             },
             xPercent: 100,
-            duration: 1.2,
-            ease: 'expo.inOut'
+            duration: 1,
+            ease: 'power2.inOut'
         });
     });
 });
