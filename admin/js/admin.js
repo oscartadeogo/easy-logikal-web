@@ -380,6 +380,18 @@ window.permanentDeleteProduct = async (id) => {
     }
 };
 
+// --- CATEGORY TOGGLE ---
+window.toggleCustomCategory = () => {
+    const select = document.getElementById('p-category');
+    const customInput = document.getElementById('p-category-custom');
+    if (select.value === 'otro') {
+        customInput.style.display = 'block';
+        customInput.focus();
+    } else {
+        customInput.style.display = 'none';
+    }
+};
+
 // --- GALLERY MANAGEMENT ---
 window.addUrlToGallery = () => {
     const input = document.getElementById('p-gallery-input');
@@ -425,10 +437,18 @@ function renderGalleryPreview() {
     const galleryInput = document.getElementById('p-gallery');
     const urls = galleryInput.value ? galleryInput.value.split(',').filter(u => u.trim() !== '') : [];
 
+    if (urls.length === 0) {
+        container.innerHTML = '<small style="color:#999; width:100%; text-align:center; padding: 1rem;">No hay imágenes en la galería</small>';
+        return;
+    }
+
     container.innerHTML = urls.map(url => `
-        <div style="position: relative; width: 60px; height: 60px; border-radius: 4px; overflow: hidden; border: 1px solid #ccc; background: white;">
-            <img src="${url}" style="width: 100%; height: 100%; object-fit: cover;">
-            <span onclick="removeFromGallery('${url}')" style="position: absolute; top: 0; right: 0; background: rgba(255,0,0,0.7); color: white; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; font-weight: bold;">×</span>
+        <div style="position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: white;">
+            <img src="${url.trim()}" 
+                 style="width: 100%; height: 100%; object-fit: cover;" 
+                 onerror="this.src='https://via.placeholder.com/80?text=Error'; this.style.opacity='0.5';">
+            <span onclick="removeFromGallery('${url}')" 
+                  style="position: absolute; top: 0; right: 0; background: #ff5252; color: white; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-weight: bold; border-bottom-left-radius: 8px;">×</span>
         </div>
     `).join('');
 }
@@ -449,7 +469,7 @@ window.handleImageProcessing = (input, targetId, callback = null) => {
     reader.onload = async (e) => {
         const img = new Image();
         img.onload = async () => {
-            const needsProcessing = img.width > 500 || img.height > 500 || file.size > 10 * 1024 * 1024;
+            const needsProcessing = img.width > 1200 || img.height > 1200 || file.size > 15 * 1024 * 1024;
             
             if (needsProcessing) {
                 const proceed = await showImageConfirmModal(file.size, img.width, img.height);
@@ -474,7 +494,7 @@ function showImageConfirmModal(size, w, h) {
         const modal = document.getElementById('image-confirm-modal');
         modal.style.display = 'flex';
         document.getElementById('orig-size').textContent = `${(size / 1024 / 1024).toFixed(2)}MB (${w}x${h})`;
-        document.getElementById('opt-size').textContent = `~0.2MB (500x500)`;
+        document.getElementById('opt-size').textContent = `~0.8MB (1200x1200)`;
         currentImageResolve = resolve;
     });
 }
@@ -491,14 +511,14 @@ function processImage(img) {
 
     // Redimensionar manteniendo aspecto
     if (width > height) {
-        if (width > 500) {
-            height *= 500 / width;
-            width = 500;
+        if (width > 1200) {
+            height *= 1200 / width;
+            width = 1200;
         }
     } else {
-        if (height > 500) {
-            width *= 500 / height;
-            height = 500;
+        if (height > 1200) {
+            width *= 1200 / height;
+            height = 1200;
         }
     }
 
@@ -588,6 +608,12 @@ function setupProductEventListeners() {
         document.getElementById('p-badge').value = '';
         document.getElementById('p-free-shipping').checked = false;
         document.getElementById('p-gallery').value = '';
+        
+        // Reset category
+        document.getElementById('p-category').value = 'juguetes';
+        document.getElementById('p-category-custom').style.display = 'none';
+        document.getElementById('p-category-custom').value = '';
+
         document.getElementById('gallery-preview-container').innerHTML = '';
         document.getElementById('variants-editor-container').innerHTML = '';
         switchModalTab('tab-general');
@@ -609,16 +635,20 @@ function setupProductEventListeners() {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
             
+            const categorySelect = document.getElementById('p-category').value;
+            const categoryCustom = document.getElementById('p-category-custom').value;
+            const finalCategory = categorySelect === 'otro' ? categoryCustom : categorySelect;
+
             const productData = {
                 name: document.getElementById('p-name').value,
-                category: document.getElementById('p-category').value,
+                category: finalCategory,
                 price: parseFloat(document.getElementById('p-price').value),
                 image: document.getElementById('p-image').value,
                 stock: parseInt(document.getElementById('p-stock').value),
                 sku: document.getElementById('p-sku').value,
                 brand: document.getElementById('p-brand').value,
                 description: document.getElementById('p-desc').value,
-                status: document.getElementById('p-status').value,
+                status: document.getElementById('p-status') ? document.getElementById('p-status').value : 'active',
                 badge: document.getElementById('p-badge').value,
                 tags: document.getElementById('p-tags').value.split(',').map(t => t.trim()).filter(t => t !== ''),
                 gallery: document.getElementById('p-gallery').value.split(',').map(t => t.trim()).filter(t => t !== ''),
@@ -679,14 +709,32 @@ window.editProduct = (id) => {
     document.getElementById('modal-title').textContent = 'Editar Producto';
     document.getElementById('edit-id').value = p.id;
     document.getElementById('p-name').value = p.name;
-    document.getElementById('p-category').value = p.category;
+    
+    // Category logic
+    const categorySelect = document.getElementById('p-category');
+    const categoryCustom = document.getElementById('p-category-custom');
+    const standardCategories = ['juguetes', 'muebles', 'hogar', 'logistica'];
+    
+    if (standardCategories.includes(p.category)) {
+        categorySelect.value = p.category;
+        categoryCustom.style.display = 'none';
+    } else {
+        categorySelect.value = 'otro';
+        categoryCustom.value = p.category;
+        categoryCustom.style.display = 'block';
+    }
+
     document.getElementById('p-price').value = p.price;
     document.getElementById('p-image').value = p.image;
     document.getElementById('p-sku').value = p.sku || '';
     document.getElementById('p-brand').value = p.brand || '';
     document.getElementById('p-stock').value = p.stock || 0;
     document.getElementById('p-desc').value = p.description || '';
-    document.getElementById('p-status').value = p.status || 'active';
+    
+    if (document.getElementById('p-status')) {
+        document.getElementById('p-status').value = p.status || 'active';
+    }
+
     document.getElementById('p-badge').value = p.badge || '';
     document.getElementById('p-tags').value = (p.tags || []).join(', ');
     document.getElementById('p-gallery').value = (p.gallery || []).join(', ');
