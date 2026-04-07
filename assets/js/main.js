@@ -92,6 +92,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const categoryList = document.getElementById('category-filters');
         if (!categoryList) return;
 
+        // Preservar la categoría activa actual para evitar reseteos en actualizaciones en tiempo real
+        const activeBtn = categoryList.querySelector('.filter-btn.active');
+        const currentActive = activeBtn ? activeBtn.getAttribute('data-category') : 'all';
+
         // Extraer categorías únicas de productos con stock > 0
         const categoriesWithStock = [...new Set(allProducts
             .filter(p => p.stock > 0)
@@ -104,9 +108,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         categoryList.innerHTML = `
-            <li><button class="filter-btn active" data-category="all">Todos los productos <span class="count">(${counts.all})</span></button></li>
+            <li><button class="filter-btn ${currentActive === 'all' ? 'active' : ''}" data-category="all">Todos los productos <span class="count">(${counts.all})</span></button></li>
             ${categoriesWithStock.map(cat => `
-                <li><button class="filter-btn" data-category="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)} <span class="count">(${counts[cat] || 0})</span></button></li>
+                <li><button class="filter-btn ${currentActive === cat ? 'active' : ''}" data-category="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)} <span class="count">(${counts[cat] || 0})</span></button></li>
             `).join('')}
         `;
 
