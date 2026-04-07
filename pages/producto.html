@@ -413,7 +413,7 @@
                                 <h4>Colores Disponibles:</h4>
                                 <div class="variant-chips">
                                     ${p.variants.map((v, i) => `
-                                        <button class="variant-chip" onclick="selectVariant(this, '${v.image}', ${v.stock})">${v.color}</button>
+                                        <button class="variant-chip" onclick='selectVariant(this, ${JSON.stringify(v)})'>${v.color}</button>
                                     `).join('')}
                                 </div>
                             </div>
@@ -470,21 +470,38 @@
             `;
         }
 
-        window.selectVariant = (btn, imageUrl, stock) => {
+        window.changeImg = (url, thumb) => {
+            document.getElementById('main-product-img').src = url;
+            document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+        };
+
+        window.selectVariant = (btn, variant) => {
             document.querySelectorAll('.variant-chip').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
 
-            // Update main image if variant has one
-            if (imageUrl && imageUrl !== 'undefined' && imageUrl !== '') {
-                document.getElementById('main-product-img').src = imageUrl;
+            // Update main image
+            if (variant.image) {
+                document.getElementById('main-product-img').src = variant.image;
+            }
+
+            // Update gallery if variant has one
+            if (variant.gallery && variant.gallery.length > 0) {
+                const thumbContainer = document.querySelector('.thumbnails');
+                if (thumbContainer) {
+                    const allVariantImages = [variant.image, ...variant.gallery].filter(img => img);
+                    thumbContainer.innerHTML = allVariantImages.map((img, i) => `
+                        <img src="${img}" class="thumb ${i === 0 ? 'active' : ''}" onclick="changeImg('${img}', this)">
+                    `).join('');
+                }
             }
 
             // Update stock status
             const stockEl = document.querySelector('.stock-status-large');
             if (stockEl) {
-                if (stock > 0) {
+                if (variant.stock > 0) {
                     stockEl.className = 'stock-status-large in-stock';
-                    stockEl.textContent = `✓ En Stock (${stock} unidades)`;
+                    stockEl.textContent = `✓ En Stock (${variant.stock} unidades)`;
                 } else {
                     stockEl.className = 'stock-status-large out-of-stock';
                     stockEl.textContent = '✗ Agotado temporalmente';

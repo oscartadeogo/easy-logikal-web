@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupProductEventListeners();
     setupBulkEditorEventListeners();
     setupExcelEventListeners();
+    
+    // Initialize animations
+    initDashboardAnimations();
 });
 
 // --- NAVIGATION ---
@@ -391,16 +394,16 @@ window.updateMainPreview = (url) => {
     const uploadText = document.querySelector('#main-image-dropzone .upload-text');
     const uploadIcon = document.querySelector('#main-image-dropzone .upload-icon');
     
-    if (url) {
+    if (url && url.length > 5) {
         preview.src = url;
         preview.style.display = 'block';
-        uploadText.style.display = 'none';
-        uploadIcon.style.display = 'none';
+        if (uploadText) uploadText.style.display = 'none';
+        if (uploadIcon) uploadIcon.style.display = 'none';
         document.getElementById('p-image').value = url;
     } else {
         preview.style.display = 'none';
-        uploadText.style.display = 'block';
-        uploadIcon.style.display = 'block';
+        if (uploadText) uploadText.style.display = 'block';
+        if (uploadIcon) uploadIcon.style.display = 'block';
     }
 };
 
@@ -444,64 +447,45 @@ function setupDropzone(id, onFile) {
 }
 
 // --- GALLERY MANAGEMENT ---
-window.addUrlToGallery = () => {
-    const input = document.getElementById('p-gallery-input');
-    const url = input.value.trim();
-    if (url) {
-        addToGalleryList(url);
-        input.value = '';
-    }
-};
-
-window.handleGalleryUpload = (input) => {
-    const file = input.files[0];
-    if (!file) return;
-
-    // Use existing image processing
-    handleImageProcessing(input, 'p-gallery-input', (processedUrl) => {
-        addToGalleryList(processedUrl);
-        document.getElementById('p-gallery-input').value = '';
+window.addGalleryUploadZone = (url = '') => {
+    const container = document.getElementById('gallery-zones-container');
+    const zId = Date.now() + Math.random().toString(36).substr(2, 9);
+    
+    const html = `
+        <div class="form-group" id="gz-${zId}" style="position:relative;">
+            <div class="image-upload-zone" style="padding: 1rem; min-height: 120px;" id="gz-drop-${zId}" onclick="document.getElementById('gz-file-${zId}').click()">
+                <span class="gz-icon-${zId}" style="${url ? 'display:none' : ''}">🖼️</span>
+                <img id="gz-prev-${zId}" src="${url}" class="image-preview-main" style="${url ? 'display:block; max-height:100px;' : ''}">
+                <input type="file" id="gz-file-${zId}" accept="image/*" style="display:none;" onchange="handleGalleryZoneUpload(this, '${zId}')">
+            </div>
+            <span onclick="removeGalleryZone('${zId}')" style="position:absolute; top:-5px; right:-5px; background:#ff5252; color:white; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; z-index:10;">×</span>
+            <input type="hidden" class="gz-url" value="${url}">
+        </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+    
+    setupDropzone(`gz-drop-${zId}`, (file) => {
+        handleGalleryZoneUpload({ files: [file] }, zId);
     });
 };
 
-function addToGalleryList(url) {
-    const container = document.getElementById('gallery-preview-container');
-    const galleryInput = document.getElementById('p-gallery');
-    
-    let currentGallery = galleryInput.value ? galleryInput.value.split(',').filter(u => u.trim() !== '') : [];
-    if (currentGallery.includes(url)) return;
-
-    currentGallery.push(url);
-    galleryInput.value = currentGallery.join(',');
-    renderGalleryPreview();
-}
-
-window.removeFromGallery = (url) => {
-    const galleryInput = document.getElementById('p-gallery');
-    let currentGallery = galleryInput.value.split(',').filter(u => u !== url && u.trim() !== '');
-    galleryInput.value = currentGallery.join(',');
-    renderGalleryPreview();
+window.handleGalleryZoneUpload = (input, zId) => {
+    handleImageProcessing(input, '', (url) => {
+        const prev = document.getElementById(`gz-prev-${zId}`);
+        prev.src = url;
+        prev.style.display = 'block';
+        document.querySelector(`#gz-${zId} .gz-icon-${zId}`).style.display = 'none';
+        document.querySelector(`#gz-${zId} .gz-url`).value = url;
+    });
 };
 
-function renderGalleryPreview() {
-    const container = document.getElementById('gallery-preview-container');
-    const galleryInput = document.getElementById('p-gallery');
-    const urls = galleryInput.value ? galleryInput.value.split(',').filter(u => u.trim() !== '') : [];
+window.removeGalleryZone = (zId) => {
+    document.getElementById(`gz-${zId}`).remove();
+};
 
-    if (urls.length === 0) {
-        container.innerHTML = '<small style="color:#999; width:100%; text-align:center; padding: 1rem;">No hay imágenes en la galería</small>';
-        return;
-    }
-
-    container.innerHTML = urls.map(url => `
-        <div style="position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: white;">
-            <img src="${url.trim()}" 
-                 style="width: 100%; height: 100%; object-fit: cover;" 
-                 onerror="this.src='https://via.placeholder.com/80?text=Error'; this.style.opacity='0.5';">
-            <span onclick="removeFromGallery('${url}')" 
-                  style="position: absolute; top: 0; right: 0; background: #ff5252; color: white; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; font-weight: bold; border-bottom-left-radius: 8px;">×</span>
-        </div>
-    `).join('');
+function getGalleryFromZones() {
+    const inputs = document.querySelectorAll('.gz-url');
+    return Array.from(inputs).map(i => i.value).filter(u => u.trim() !== '');
 }
 
 // --- IMAGE PROCESSING (CANVAS) ---
@@ -585,23 +569,82 @@ function processImage(img) {
 // --- VARIANTS EDITOR ---
 window.addNewVariant = () => {
     const container = document.getElementById('variants-editor-container');
-    const variantId = Date.now();
+    const vId = Date.now();
     const html = `
-        <div class="variant-item" id="variant-${variantId}">
-            <span class="remove-variant" onclick="removeVariant(${variantId})">×</span>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                <input type="text" class="v-color" placeholder="Color (ej. Rojo)" style="padding: 4px;">
-                <input type="number" class="v-stock" placeholder="Stock" style="padding: 4px;">
+        <div class="variant-item" id="variant-${vId}">
+            <span class="remove-variant" onclick="removeVariant('${vId}')">×</span>
+            
+            <div class="variant-grid">
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="text" class="v-color" placeholder="Ej: Rojo F1">
+                </div>
+                <div class="form-group">
+                    <label>Stock</label>
+                    <input type="number" class="v-stock" placeholder="0">
+                </div>
             </div>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                <input type="text" class="v-image" placeholder="URL Imagen del color" style="flex:1; font-size: 0.7rem; padding: 4px;">
-                <input type="file" accept="image/*" style="display:none;" onchange="handleImageProcessing(this, 'v-img-input-${variantId}')" id="v-file-${variantId}">
-                <button type="button" onclick="document.getElementById('v-file-${variantId}').click()" style="font-size:0.7rem; padding: 2px 5px;">Subir</button>
-                <input type="hidden" id="v-img-input-${variantId}" class="v-image-hidden">
+
+            <div class="variant-image-section">
+                <!-- Variant Main Image -->
+                <div class="form-group">
+                    <label style="font-size: 0.8rem;">Foto Principal Color</label>
+                    <div class="small-upload-zone" id="v-main-zone-${vId}" onclick="document.getElementById('v-file-main-${vId}').click()">
+                        <span class="v-icon-${vId}">📸</span>
+                        <img id="v-preview-main-${vId}" class="small-preview">
+                        <input type="file" id="v-file-main-${vId}" accept="image/*" style="display:none;" 
+                               onchange="handleVariantImage(this, '${vId}', 'main')">
+                    </div>
+                    <input type="hidden" class="v-image-main">
+                </div>
+
+                <!-- Variant Gallery -->
+                <div class="form-group">
+                    <label style="font-size: 0.8rem;">Galería Color</label>
+                    <div class="small-upload-zone" id="v-gal-zone-${vId}" onclick="document.getElementById('v-file-gal-${vId}').click()">
+                        <span>➕</span>
+                        <div id="v-preview-gal-${vId}" style="display:flex; gap:2px; flex-wrap:wrap; justify-content:center;"></div>
+                        <input type="file" id="v-file-gal-${vId}" accept="image/*" style="display:none;" 
+                               onchange="handleVariantImage(this, '${vId}', 'gallery')">
+                    </div>
+                    <input type="hidden" class="v-image-gallery">
+                </div>
             </div>
         </div>
     `;
     container.insertAdjacentHTML('beforeend', html);
+    
+    // Setup Dropzones for this new variant
+    setupDropzone(`v-main-zone-${vId}`, (file) => {
+        handleVariantImage({ files: [file] }, vId, 'main');
+    });
+    setupDropzone(`v-gal-zone-${vId}`, (file) => {
+        handleVariantImage({ files: [file] }, vId, 'gallery');
+    });
+};
+
+window.handleVariantImage = (input, vId, type) => {
+    handleImageProcessing(input, '', (url) => {
+        const variantEl = document.getElementById(`variant-${vId}`);
+        if (type === 'main') {
+            variantEl.querySelector('.v-image-main').value = url;
+            const preview = document.getElementById(`v-preview-main-${vId}`);
+            preview.src = url;
+            preview.style.display = 'block';
+            variantEl.querySelector(`.v-icon-${vId}`).style.display = 'none';
+        } else {
+            const galInput = variantEl.querySelector('.v-image-gallery');
+            let current = galInput.value ? galInput.value.split(',').filter(u => u.trim() !== '') : [];
+            current.push(url);
+            galInput.value = current.join(',');
+            
+            // Render small gallery preview
+            const galPreview = document.getElementById(`v-preview-gal-${vId}`);
+            galPreview.innerHTML += `
+                <img src="${url}" style="width:25px; height:25px; object-fit:cover; border-radius:2px;">
+            `;
+        }
+    });
 };
 
 window.removeVariant = (id) => {
@@ -614,9 +657,16 @@ function getVariantsFromEditor() {
     items.forEach(item => {
         const color = item.querySelector('.v-color').value;
         const stock = item.querySelector('.v-stock').value;
-        const image = item.querySelector('.v-image-hidden').value || item.querySelector('.v-image').value;
+        const image = item.querySelector('.v-image-main').value;
+        const gallery = item.querySelector('.v-image-gallery').value.split(',').filter(u => u.trim() !== '');
+        
         if (color) {
-            variants.push({ color, stock: parseInt(stock) || 0, image });
+            variants.push({ 
+                color, 
+                stock: parseInt(stock) || 0, 
+                image: image || '', 
+                gallery: gallery || [] 
+            });
         }
     });
     return variants;
@@ -628,23 +678,54 @@ function setVariantsToEditor(variants) {
     if (!variants || !Array.isArray(variants)) return;
 
     variants.forEach((v, idx) => {
-        const variantId = `v-existing-${idx}`;
+        const vId = `v-exist-${idx}`;
         const html = `
-            <div class="variant-item" id="variant-${variantId}">
-                <span class="remove-variant" onclick="removeVariant('${variantId}')">×</span>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                    <input type="text" class="v-color" value="${v.color || ''}" placeholder="Color" style="padding: 4px;">
-                    <input type="number" class="v-stock" value="${v.stock || 0}" placeholder="Stock" style="padding: 4px;">
+            <div class="variant-item" id="variant-${vId}">
+                <span class="remove-variant" onclick="removeVariant('${vId}')">×</span>
+                
+                <div class="variant-grid">
+                    <div class="form-group">
+                        <label>Color</label>
+                        <input type="text" class="v-color" value="${v.color || ''}" placeholder="Ej: Rojo F1">
+                    </div>
+                    <div class="form-group">
+                        <label>Stock</label>
+                        <input type="number" class="v-stock" value="${v.stock || 0}" placeholder="0">
+                    </div>
                 </div>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <input type="text" class="v-image" value="${v.image || ''}" placeholder="URL Imagen" style="flex:1; font-size: 0.7rem; padding: 4px;">
-                    <input type="file" accept="image/*" style="display:none;" onchange="handleImageProcessing(this, 'v-img-input-${variantId}')" id="v-file-${variantId}">
-                    <button type="button" onclick="document.getElementById('v-file-${variantId}').click()" style="font-size:0.7rem; padding: 2px 5px;">Subir</button>
-                    <input type="hidden" id="v-img-input-${variantId}" value="${v.image || ''}" class="v-image-hidden">
+
+                <div class="variant-image-section">
+                    <div class="form-group">
+                        <label style="font-size: 0.8rem;">Foto Principal Color</label>
+                        <div class="small-upload-zone" id="v-main-zone-${vId}" onclick="document.getElementById('v-file-main-${vId}').click()">
+                            <span class="v-icon-${vId}" style="${v.image ? 'display:none' : ''}">📸</span>
+                            <img id="v-preview-main-${vId}" src="${v.image || ''}" class="small-preview" style="${v.image ? 'display:block' : ''}">
+                            <input type="file" id="v-file-main-${vId}" accept="image/*" style="display:none;" 
+                                   onchange="handleVariantImage(this, '${vId}', 'main')">
+                        </div>
+                        <input type="hidden" class="v-image-main" value="${v.image || ''}">
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-size: 0.8rem;">Galería Color</label>
+                        <div class="small-upload-zone" id="v-gal-zone-${vId}" onclick="document.getElementById('v-file-gal-${vId}').click()">
+                            <span>➕</span>
+                            <div id="v-preview-gal-${vId}" style="display:flex; gap:2px; flex-wrap:wrap; justify-content:center;">
+                                ${(v.gallery || []).map(img => `<img src="${img}" style="width:25px; height:25px; object-fit:cover; border-radius:2px;">`).join('')}
+                            </div>
+                            <input type="file" id="v-file-gal-${vId}" accept="image/*" style="display:none;" 
+                                   onchange="handleVariantImage(this, '${vId}', 'gallery')">
+                        </div>
+                        <input type="hidden" class="v-image-gallery" value="${(v.gallery || []).join(',')}">
+                    </div>
                 </div>
             </div>
         `;
         container.insertAdjacentHTML('beforeend', html);
+        
+        // Setup dropzones for existing
+        setupDropzone(`v-main-zone-${vId}`, (file) => handleVariantImage({ files: [file] }, vId, 'main'));
+        setupDropzone(`v-gal-zone-${vId}`, (file) => handleVariantImage({ files: [file] }, vId, 'gallery'));
     });
 }
 
@@ -658,7 +739,10 @@ function setupProductEventListeners() {
         document.getElementById('edit-id').value = '';
         document.getElementById('p-badge').value = '';
         document.getElementById('p-free-shipping').checked = false;
-        document.getElementById('p-gallery').value = '';
+        
+        // Reset Gallery Zones
+        document.getElementById('gallery-zones-container').innerHTML = '';
+        addGalleryUploadZone(); // Add one empty by default
         
         // Reset category
         document.getElementById('p-category').value = 'juguetes';
@@ -726,8 +810,8 @@ function setupProductEventListeners() {
                 status: document.getElementById('p-status') ? document.getElementById('p-status').value : 'active',
                 badge: document.getElementById('p-badge').value,
                 tags: document.getElementById('p-tags').value.split(',').map(t => t.trim()).filter(t => t !== ''),
-                gallery: document.getElementById('p-gallery').value.split(',').map(t => t.trim()).filter(t => t !== ''),
-                variants: getVariantsFromEditor(),
+        gallery: getGalleryFromZones(),
+        variants: getVariantsFromEditor(),
                 shipping_info: {
                     free_shipping: document.getElementById('p-free-shipping').checked,
                     cost: 0
@@ -813,8 +897,12 @@ window.editProduct = (id) => {
 
     document.getElementById('p-badge').value = p.badge || '';
     document.getElementById('p-tags').value = (p.tags || []).join(', ');
-    document.getElementById('p-gallery').value = (p.gallery || []).join(', ');
-    renderGalleryPreview();
+    
+    // Load Gallery Zones
+    document.getElementById('gallery-zones-container').innerHTML = '';
+    if (p.gallery && Array.isArray(p.gallery)) {
+        p.gallery.forEach(url => addGalleryUploadZone(url));
+    }
     
     // Shipping info
     const shipping = p.shipping_info || { free_shipping: false };
