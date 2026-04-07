@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     name TEXT NOT NULL,
     description TEXT,
-    long_description TEXT,
     price DECIMAL(12,2) DEFAULT 0.00,
     category TEXT DEFAULT 'general',
     brand TEXT DEFAULT 'Premium',
@@ -24,7 +23,6 @@ CREATE TABLE IF NOT EXISTS posts (
     id BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     title TEXT NOT NULL,
-    summary TEXT,
     content TEXT NOT NULL, -- Soporta HTML
     image TEXT, -- URL imagen destacada
     category TEXT DEFAULT 'General',

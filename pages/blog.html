@@ -147,17 +147,23 @@
                     return;
                 }
 
-                blogContainer.innerHTML = posts.map(p => `
+                blogContainer.innerHTML = posts.map(p => {
+                    // Create summary from content if summary is missing
+                    const plainText = p.content.replace(/<[^>]*>/g, ' ');
+                    const summary = plainText.length > 120 ? plainText.substring(0, 117) + '...' : plainText;
+
+                    return `
                     <article class="service-card" data-reveal="up">
                         <div class="image-wrapper mb-1">
                             <img src="${p.image || 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=400'}" alt="${p.title}">
                         </div>
                         <span class="product-category">${p.category || 'General'}</span>
                         <h3>${p.title}</h3>
-                        <p>${p.summary || p.content.substring(0, 100) + '...'}</p>
+                        <p>${summary}</p>
                         <a href="post.html?id=${p.id}" class="btn btn-outline mt-1 w-100">Leer más</a>
                     </article>
-                `).join('');
+                `;
+                }).join('');
 
                 // Trigger GSAP if available
                 if (window.gsap) {

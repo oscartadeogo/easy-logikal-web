@@ -300,7 +300,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const id = document.getElementById('b-id').value;
             const blogData = {
                 title: document.getElementById('b-title').value,
-                summary: document.getElementById('b-summary').value,
                 content: document.getElementById('b-content').value,
                 image: document.getElementById('b-image').value,
                 category: document.getElementById('b-category').value,
@@ -374,7 +373,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('blog-modal-title').textContent = 'Editar Entrada de Blog';
             document.getElementById('b-id').value = data.id;
             document.getElementById('b-title').value = data.title;
-            document.getElementById('b-summary').value = data.summary;
             document.getElementById('b-content').value = data.content;
             document.getElementById('b-image').value = data.image || '';
             document.getElementById('b-category').value = data.category || '';
@@ -564,7 +562,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sku: document.getElementById('p-sku').value,
                 brand: document.getElementById('p-brand').value,
                 description: document.getElementById('p-desc').value,
-                long_description: document.getElementById('p-long-desc').value,
                 tags: document.getElementById('p-tags').value.split(',').map(t => t.trim()),
                 gallery: document.getElementById('p-gallery').value.split(',').map(t => t.trim()).filter(t => t !== ''),
                 variants: JSON.parse(document.getElementById('p-variants').value || '[]')
@@ -713,7 +710,6 @@ window.editProduct = (id) => {
     document.getElementById('p-brand').value = p.brand || '';
     document.getElementById('p-stock').value = p.stock || 110;
     document.getElementById('p-desc').value = p.description || '';
-    document.getElementById('p-long-desc').value = p.long_description || '';
     document.getElementById('p-tags').value = (p.tags || []).join(', ');
     document.getElementById('p-gallery').value = (p.gallery || []).join(', ');
     document.getElementById('p-variants').value = JSON.stringify(p.variants || []);

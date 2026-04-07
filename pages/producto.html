@@ -403,7 +403,10 @@
                             ${p.stock > 0 ? `✓ En Stock (${p.stock} unidades)` : '✗ Agotado temporalmente'}
                         </div>
                         
-                        <p class="product-short-desc">${p.description || 'Descubre la excelencia en este producto premium. Ideal para importación directa y distribución mayorista.'}</p>
+                        <div class="product-description-container mt-2">
+                            <h4 class="mb-1">Descripción del Producto</h4>
+                            <div class="prose">${p.description || 'No hay descripción disponible para este producto.'}</div>
+                        </div>
 
                         ${p.variants && p.variants.length > 0 ? `
                             <div class="variants-selector mt-2">
@@ -441,16 +444,10 @@
 
                 <div class="product-tabs-container mt-4">
                     <div class="tab-header">
-                        <div class="tab-link active" onclick="switchTab(event, 'desc')">Descripción</div>
-                        <div class="tab-link" onclick="switchTab(event, 'specs')">Especificaciones</div>
+                        <div class="tab-link active" onclick="switchTab(event, 'specs')">Especificaciones Técnicas</div>
                         <div class="tab-link" onclick="switchTab(event, 'shipping')">Logística y Envío</div>
                     </div>
-                    <div class="tab-content" id="tab-desc">
-                        <div class="prose">
-                            ${p.long_description || p.description || 'No hay descripción detallada disponible.'}
-                        </div>
-                    </div>
-                    <div class="tab-content" id="tab-specs" style="display: none;">
+                    <div class="tab-content" id="tab-specs">
                         <table class="specs-table">
                             <tr><td>Marca</td><td>${p.brand || 'Premium'}</td></tr>
                             <tr><td>SKU</td><td>${p.sku || 'N/A'}</td></tr>
