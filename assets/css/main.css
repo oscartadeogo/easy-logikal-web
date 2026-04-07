@@ -35,9 +35,20 @@
 
     /* Transitions */
     --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
-    --transition-fast: 0.2s var(--ease-out);
-    --transition-base: 0.4s var(--ease-out);
-    --transition-slow: 0.8s var(--ease-out);
+    --transition-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Global Hardware Acceleration */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+[data-reveal], .product-card, .category-card, .btn, .nav-link, .modal-content {
+    will-change: transform, opacity;
+    transform: translate3d(0, 0, 0);
 }
 
 /* Base Reset */

@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let allProducts = [];
     
     async function loadProducts() {
-        if (!productContainer) return;
+        if (!productContainer && !document.getElementById('home-featured-products')) return;
         
         try {
             const { data, error } = await supabaseClient
@@ -74,12 +74,60 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (error) throw error;
             
             allProducts = data;
-            renderProducts(allProducts);
+            
+            // Actualizar categorías dinámicamente si estamos en la página de productos
+            if (document.getElementById('category-filters')) {
+                renderDynamicCategories();
+            }
+
+            if (productContainer) renderProducts(allProducts);
+            if (document.getElementById('home-featured-products')) loadHomeFeatured();
+
         } catch (error) {
             console.error('Error cargando productos:', error);
-            productContainer.innerHTML = '<div class="error">Error al conectar con la base de datos. Asegúrate de haber ejecutado el SQL.</div>';
         }
     }
+
+    function renderDynamicCategories() {
+        const categoryList = document.getElementById('category-filters');
+        if (!categoryList) return;
+
+        // Extraer categorías únicas de productos con stock > 0
+        const categoriesWithStock = [...new Set(allProducts
+            .filter(p => p.stock > 0)
+            .map(p => p.category)
+        )].sort();
+
+        const counts = { all: allProducts.length };
+        allProducts.forEach(p => {
+            counts[p.category] = (counts[p.category] || 0) + 1;
+        });
+
+        categoryList.innerHTML = `
+            <li><button class="filter-btn active" data-category="all">Todos los productos <span class="count">(${counts.all})</span></button></li>
+            ${categoriesWithStock.map(cat => `
+                <li><button class="filter-btn" data-category="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)} <span class="count">(${counts[cat] || 0})</span></button></li>
+            `).join('')}
+        `;
+
+        // Re-vincular eventos a los nuevos botones
+        categoryList.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                categoryList.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                applyAllFilters();
+            });
+        });
+    }
+
+    // Suscribirse a cambios en tiempo real en Supabase
+    const productSubscription = supabaseClient
+        .channel('public:products')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+            console.log('Cambio detectado en productos:', payload);
+            loadProducts(); // Recargar todo para mantener consistencia
+        })
+        .subscribe();
 
     await loadProducts();
     await loadMarketingBanners();
@@ -438,12 +486,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const catParam = urlParams.get('cat');
     if (catParam) {
-        const targetBtn = document.querySelector(`[data-category="${catParam}"]`);
-        if (targetBtn) {
-            categoryFilters.forEach(b => b.classList.remove('active'));
-            targetBtn.classList.add('active');
-            setTimeout(applyAllFilters, 500);
-        }
+        // Esperar un momento a que las categorías dinámicas se rendericen
+        setTimeout(() => {
+            const targetBtn = document.querySelector(`[data-category="${catParam}"]`);
+            if (targetBtn) {
+                const categoryList = document.getElementById('category-filters');
+                if (categoryList) {
+                    categoryList.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    targetBtn.classList.add('active');
+                    applyAllFilters();
+                }
+            }
+        }, 800);
     }
 
     // Filtering Logic (Override old simple filter)
