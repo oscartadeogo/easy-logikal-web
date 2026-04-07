@@ -1283,6 +1283,40 @@ img {
 .modal-content h2 span { color: var(--primary); }
 .modal-content p { color: var(--text-muted); font-size: 0.9rem; }
 
+/* Social Cards in Contact Page */
+.social-cards {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.social-card {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 1.5rem;
+    background: #f9f9f9;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--secondary);
+    font-weight: 600;
+    transition: var(--transition-base);
+    text-decoration: none;
+}
+
+.social-card:hover {
+    background: white;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.social-card.fb:hover { border-color: #1877f2; color: #1877f2; }
+.social-card.ig:hover { border-color: #e4405f; color: #e4405f; }
+
+.social-card svg {
+    flex-shrink: 0;
+}
+
 .product-actions {
     padding: 0 1.5rem 1.5rem;
     display: grid;
