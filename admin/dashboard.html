@@ -144,6 +144,16 @@
         .btn-edit { background: #E3F2FD; color: #1976D2; margin-right: 0.5rem; }
         .btn-delete { background: #FFEBEE; color: #D32F2F; }
 
+        /* Marketing Badges */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        .badge.banner { background: #E3F2FD; color: #1976D2; }
+        .badge.discount { background: #E8F5E9; color: #2E7D32; }
+
         /* Modal */
         .modal {
             display: none;
@@ -177,10 +187,13 @@
 </head>
 <body>
     <aside class="sidebar">
-        <h2>EASY LOGIKAL</h2>
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <img src="../assets/img/logo.png" alt="Logo" style="width: 150px; height: auto;">
+        </div>
         <ul class="nav-menu">
             <li class="nav-item active" data-target="products-section">Productos</li>
             <li class="nav-item" data-target="orders-section">Pedidos</li>
+            <li class="nav-item" data-target="marketing-section">Marketing</li>
             <li class="nav-item" data-target="analytics-section">Analytics</li>
             <li class="nav-item" data-target="cms-section">CMS Blog</li>
             <li class="nav-item" data-target="users-section">Usuarios</li>
@@ -266,6 +279,44 @@
                             <td>06 Abr 2026</td>
                             <td><button class="btn btn-edit">Ver Detalle</button></td>
                         </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="marketing-section" class="dashboard-section" style="display: none;">
+            <div class="header">
+                <h1>Marketing y Promociones</h1>
+                <button class="btn btn-add" id="add-promo-btn">+ Nueva Promoción / Banner</button>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Banners Activos</h4>
+                    <p id="active-banners">0</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Cupones Activos</h4>
+                    <p id="active-coupons">0</p>
+                </div>
+            </div>
+
+            <div class="card mt-2">
+                <div class="table-header">
+                    <h3>Banners y Descuentos</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Título / Código</th>
+                            <th>Valor / Link</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="marketing-table-body">
+                        <!-- Items de marketing aquí -->
                     </tbody>
                 </table>
             </div>
@@ -372,20 +423,91 @@
                     <input type="number" id="p-price" step="0.01" required>
                 </div>
                 <div class="form-group">
+                    <label>SKU</label>
+                    <input type="text" id="p-sku" placeholder="Ej. 18-38202">
+                </div>
+                <div class="form-group">
+                    <label>Marca</label>
+                    <input type="text" id="p-brand" placeholder="Ej. Bburago">
+                </div>
+                <div class="form-group">
                     <label>Stock Inicial</label>
-                    <input type="number" id="p-stock" value="10" required>
+                    <input type="number" id="p-stock" value="110" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripción Corta</label>
+                    <textarea id="p-desc" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Descripción Larga (HTML)</label>
+                    <textarea id="p-long-desc" rows="5"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Etiquetas (Separadas por coma)</label>
+                    <input type="text" id="p-tags" placeholder="naranja, negro, f1">
+                </div>
+                <div class="form-group">
+                    <label>URL Imagen Principal</label>
+                    <input type="text" id="p-image" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Galería (URLs separadas por coma)</label>
+                    <textarea id="p-gallery" rows="3" placeholder="url1, url2, url3"></textarea>
                 </div>
                 <div class="form-group">
                     <label>Variantes (JSON)</label>
-                    <textarea id="p-variants" placeholder='[{"color": "rojo", "talla": "XL"}]' rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>URL Imagen</label>
-                    <input type="text" id="p-image" placeholder="https://...">
+                    <textarea id="p-variants" placeholder='[{"color": "rojo", "talla": "XL"}]' rows="2"></textarea>
                 </div>
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                     <button type="button" class="btn" style="flex: 1; background: #eee;" onclick="closeModal()">Cancelar</button>
                     <button type="submit" class="btn btn-add" style="flex: 1;">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Marketing -->
+    <div class="modal" id="marketing-modal">
+        <div class="modal-content">
+            <h2 id="marketing-modal-title">Agregar Promoción / Banner</h2>
+            <form id="marketing-form">
+                <input type="hidden" id="m-id">
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="m-type" required onchange="toggleMarketingFields()">
+                        <option value="banner">Banner Principal</option>
+                        <option value="discount">Cupón / Descuento</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label id="m-label-title">Título del Banner</label>
+                    <input type="text" id="m-title" required>
+                </div>
+                <div class="form-group" id="m-field-value">
+                    <label>Valor (Ej. 15% o $200)</label>
+                    <input type="text" id="m-value">
+                </div>
+                <div class="form-group">
+                    <label id="m-label-link">Imagen URL o Link</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="m-link" placeholder="https://..." style="flex: 1;">
+                        <input type="file" id="m-file" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+                        <button type="button" class="btn" style="background: #666; color: white;" onclick="document.getElementById('m-file').click()">Subir</button>
+                    </div>
+                    <div id="m-preview-container" style="margin-top: 1rem; display: none;">
+                        <img id="m-preview" src="" alt="Preview" style="max-width: 100%; height: 100px; object-fit: cover; border-radius: 4px;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="m-status">
+                        <option value="active">Activo</option>
+                        <option value="inactive">Inactivo</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" class="btn" style="flex: 1; background: #eee;" onclick="closeMarketingModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-add" style="flex: 1;">Guardar Marketing</button>
                 </div>
             </form>
         </div>

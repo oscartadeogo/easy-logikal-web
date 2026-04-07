@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Producto | Easy Logikal Comercialización</title>
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/js/supabase-client.js"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/animations.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        .product-detail-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: var(--space-lg);
+            margin-top: var(--space-md);
+        }
+
+        /* Gallery Styles */
+        .product-gallery {
+            position: sticky;
+            top: 100px;
+        }
+        .main-image-container {
+            position: relative;
+            background: #f9f9f9;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1/1;
+            cursor: zoom-in;
+            border: 1px solid var(--border);
+        }
+        .main-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+        .main-image-container:hover img {
+            transform: scale(1.5);
+        }
+        .thumbnails {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        .thumb {
+            width: 80px;
+            height: 80px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            object-fit: cover;
+            opacity: 0.6;
+            transition: 0.3s;
+        }
+        .thumb.active, .thumb:hover {
+            opacity: 1;
+            border-color: var(--primary);
+        }
+
+        /* Info Styles */
+        .product-info-detail h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+        .product-price-large {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+        .stock-status {
+            font-size: 0.9rem;
+            color: #2e7d32;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        .product-meta {
+            border-top: 1px solid var(--border);
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .meta-item {
+            margin-bottom: 0.5rem;
+        }
+        .meta-label {
+            font-weight: 700;
+            color: var(--secondary);
+            width: 100px;
+            display: inline-block;
+        }
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 2rem 0;
+        }
+        .qty-controls {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        .qty-controls button {
+            padding: 8px 15px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        .qty-controls input {
+            width: 50px;
+            text-align: center;
+            border: none;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
+
+        /* Shipping Banner */
+        .shipping-info-box {
+            background: #f0f7f0;
+            border: 1px dashed #2e7d32;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+        .shipping-info-box h4 {
+            color: #2e7d32;
+            margin-bottom: 5px;
+            font-family: var(--font-sans);
+        }
+
+        /* Tabs/Description */
+        .product-tabs {
+            margin-top: var(--space-lg);
+        }
+        .tab-header {
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 30px;
+        }
+        .tab-link {
+            padding: 10px 0;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+        }
+        .tab-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+        }
+        .tab-content {
+            padding: 2rem 0;
+        }
+
+        /* Social Share */
+        .social-share {
+            display: flex;
+            gap: 15px;
+            margin-top: 1rem;
+        }
+        .share-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+        .fb { background: #3b5998; }
+        .x { background: #000; }
+        .pin { background: #bd081c; }
+        .wa { background: #25d366; }
+
+        @media (max-width: 992px) {
+            .product-detail-grid {
+                grid-template-columns: 1fr;
+            }
+            .product-gallery {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="container header-container">
+            <a href="../index.html" class="logo">
+                <img src="../assets/img/logo.png" alt="Easy Logikal Logo" style="height: 50px; width: auto;">
+            </a>
+            
+            <nav class="nav" id="nav-menu">
+                <ul class="nav-list">
+                    <li><a href="../index.html" class="nav-link">Inicio</a></li>
+                    <li><a href="productos.html" class="nav-link active">Productos</a></li>
+                    <li><a href="nosotros.html" class="nav-link">Nosotros</a></li>
+                    <li><a href="servicios.html" class="nav-link">Servicios</a></li>
+                    <li><a href="portafolio.html" class="nav-link">Portafolio</a></li>
+                    <li><a href="blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="contacto.html" class="nav-link">Contacto</a></li>
+                </ul>
+            </nav>
+            
+            <div class="header-actions">
+                <a href="#" class="cart-icon" id="cart-toggle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                    <span class="cart-count">0</span>
+                </a>
+                <a href="contacto.html" class="btn btn-primary">Cotizar</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="mt-2 container" style="padding-top: 100px;">
+        <div id="product-detail-container">
+            <!-- Content loaded dynamically -->
+            <div class="loader">Cargando detalles del producto...</div>
+        </div>
+
+        <!-- Related Products -->
+        <section class="section">
+            <h2 class="section-title">Productos <span>Relacionados</span></h2>
+            <div class="services-grid mt-2" id="related-products-container">
+                <!-- Related products will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-2">
+        <div class="container footer-grid">
+            <div class="footer-info">
+                <img src="../assets/img/logo.png" alt="Easy Logikal Logo" style="height: 40px; width: auto; margin-bottom: 1rem; filter: brightness(0) invert(1);">
+                <p>Tu socio estratégico en importación y distribución mayorista en México.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Enlaces</h4>
+                <ul>
+                    <li><a href="../index.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Nosotros</a></li>
+                    <li><a href="productos.html">Productos</a></li>
+                    <li><a href="contacto.html">Contacto</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4>Contacto</h4>
+                <p>Email: contacto@easylogikal.com</p>
+                <p>Tel: +52 (55) 1234 5678</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Easy Logikal Comercialización. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/cart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            if (!productId) {
+                window.location.href = 'productos.html';
+                return;
+            }
+
+            try {
+                // Fetch Product Details
+                const { data: product, error } = await supabaseClient
+                    .from('products')
+                    .select('*')
+                    .eq('id', productId)
+                    .single();
+
+                if (error) throw error;
+
+                renderProductDetail(product);
+                loadRelatedProducts(product.category, product.id);
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('product-detail-container').innerHTML = '<p>Error al cargar el producto.</p>';
+            }
+        });
+
+        function renderProductDetail(p) {
+            const container = document.getElementById('product-detail-container');
+            
+            // Gallery Images (Mock for now, will use DB gallery field)
+            const images = p.gallery || [p.image, p.image, p.image]; 
+            
+            container.innerHTML = `
+                <div class="product-detail-grid">
+                    <div class="product-gallery">
+                        <div class="main-image-container" id="main-img-container">
+                            <img src="${p.image}" alt="${p.name}" id="main-product-img">
+                        </div>
+                        <div class="thumbnails">
+                            ${images.map((img, i) => `
+                                <img src="${img}" class="thumb ${i === 0 ? 'active' : ''}" onclick="changeImg('${img}', this)">
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="product-info-detail">
+                        <nav style="font-size: 0.8rem; margin-bottom: 1rem; color: #888;">
+                            Inicio / Productos / ${p.category.toUpperCase()} / ${p.name}
+                        </nav>
+                        <h1>${p.name}</h1>
+                        <div class="product-price-large">$${parseFloat(p.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</div>
+                        <div class="stock-status">✓ ${p.stock || 110} disponibles</div>
+                        
+                        <p class="text-muted">${p.description || 'Descubre la excelencia y el detalle en este producto premium. Ideal para coleccionistas y entusiastas.'}</p>
+
+                        <div class="shipping-info-box">
+                            <h4>Envío Gratis en Compras Mayores a $499</h4>
+                            <p style="font-size: 0.85rem; margin: 0;">Disfruta de envío gratis en toda la República Mexicana en pedidos mayores a $499 pesos.</p>
+                        </div>
+
+                        <div class="quantity-selector">
+                            <div class="qty-controls">
+                                <button onclick="updateDetailQty(-1)">-</button>
+                                <input type="number" id="detail-qty" value="1" min="1">
+                                <button onclick="updateDetailQty(1)">+</button>
+                            </div>
+                            <button class="btn btn-primary" onclick="addToCartWithQty(${p.id})">Añadir al Carrito</button>
+                        </div>
+
+                        <div class="product-meta">
+                            <div class="meta-item"><span class="meta-label">SKU:</span> ${p.sku || 'N/A'}</div>
+                            <div class="meta-item"><span class="meta-label">Categorías:</span> ${p.category}, Todos los productos</div>
+                            <div class="meta-item"><span class="meta-label">Marca:</span> ${p.brand || 'Premium'}</div>
+                        </div>
+
+                        <div class="mt-2">
+                            <strong>Compartir:</strong>
+                            <div class="social-share">
+                                <a href="#" class="share-btn fb">F</a>
+                                <a href="#" class="share-btn x">X</a>
+                                <a href="#" class="share-btn pin">P</a>
+                                <a href="#" class="share-btn wa">W</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-tabs">
+                    <div class="tab-header">
+                        <div class="tab-link active">Descripción</div>
+                        <div class="tab-link">Información Adicional</div>
+                    </div>
+                    <div class="tab-content">
+                        <h3>${p.name}</h3>
+                        <p class="mt-1">${p.long_description || 'Este producto destaca por su durabilidad y acabado realista. Cada detalle ha sido cuidadosamente recreado para capturar la esencia de la marca. Con su estética moderna y distintiva, no solo impresionará a los entusiastas, sino que también es ideal para exhibir en cualquier colección.'}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.changeImg = (src, thumb) => {
+            document.getElementById('main-product-img').src = src;
+            document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+        };
+
+        window.updateDetailQty = (delta) => {
+            const input = document.getElementById('detail-qty');
+            let val = parseInt(input.value) + delta;
+            if (val < 1) val = 1;
+            input.value = val;
+        };
+
+        window.addToCartWithQty = (id) => {
+            const qty = parseInt(document.getElementById('detail-qty').value);
+            // Reutilizamos lógica de cart.js
+            for(let i=0; i<qty; i++) {
+                addToCart(id);
+            }
+            alert('¡Producto añadido al carrito!');
+        };
+
+        async function loadRelatedProducts(category, currentId) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('products')
+                    .select('*')
+                    .eq('category', category)
+                    .neq('id', currentId)
+                    .limit(4);
+
+                if (error) throw error;
+
+                const container = document.getElementById('related-products-container');
+                container.innerHTML = data.map(rp => `
+                    <div class="service-card" onclick="window.location.href='producto.html?id=${rp.id}'" style="cursor: pointer;">
+                        <div class="image-wrapper mb-1">
+                            <img src="${rp.image}" alt="${rp.name}">
+                        </div>
+                        <h3>${rp.name}</h3>
+                        <p class="product-price">$${parseFloat(rp.price).toLocaleString('es-MX')}</p>
+                        <button class="btn btn-outline w-100 mt-1">Añadir al Carrito</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.warn('Error cargando relacionados:', error);
+            }
+        }
+    </script>
+</body>
+</html>

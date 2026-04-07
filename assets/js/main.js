@@ -82,6 +82,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     await loadProducts();
+    await loadMarketingBanners();
+
+    async function loadMarketingBanners() {
+        const bannerContainer = document.getElementById('dynamic-banner-container');
+        if (!bannerContainer) return;
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('marketing')
+                .select('*')
+                .eq('type', 'banner')
+                .eq('status', 'active')
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (error) throw error;
+            if (data && data.length > 0) {
+                const banner = data[0];
+                bannerContainer.innerHTML = `
+                    <div class="top-banner" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${banner.link}');">
+                        <div class="container text-center py-1">
+                            <p style="color: white; font-weight: 600; font-size: 0.9rem;">${banner.title}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.warn('Error cargando banners:', error);
+        }
+    }
 
     // Filtering Logic
     categoryFilters.forEach(btn => {
@@ -110,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         productContainer.innerHTML = productsToRender.map(product => `
-            <div class="product-card" data-reveal="up">
+            <div class="product-card" data-reveal="up" onclick="window.location.href='producto.html?id=${product.id}'" style="cursor: pointer;">
                 <div class="product-image">
                     ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
                     <img src="${product.image || 'https://via.placeholder.com/400'}" alt="${product.name}">
@@ -120,9 +150,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <h3 class="product-title">${product.name}</h3>
                     <p class="product-price">$${parseFloat(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
                 </div>
-                <div class="product-actions">
+                <div class="product-actions" onclick="event.stopPropagation()">
                     <button class="btn btn-outline btn-add-cart" onclick="addToCart(${product.id})">Agregar al Carrito</button>
-                    <button class="btn btn-primary btn-add-cart">Ver Detalles</button>
+                    <button class="btn btn-primary btn-add-cart" onclick="window.location.href='producto.html?id=${product.id}'">Ver Detalles</button>
                 </div>
             </div>
         `).join('');

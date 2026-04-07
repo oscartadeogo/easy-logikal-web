@@ -39,8 +39,196 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'orders-section') {
                 loadOrders();
             }
+            if (target === 'marketing-section') {
+                loadMarketingItems();
+            }
         });
     });
+
+    async function loadMarketingItems() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('marketing')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                if (error.code === 'PGRST116' || error.message.includes('not found')) {
+                    console.warn('Tabla marketing no encontrada. Por favor ejecuta el SQL.');
+                    return;
+                }
+                throw error;
+            }
+            renderMarketingTable(data);
+        } catch (error) {
+            console.error('Error cargando marketing:', error);
+        }
+    }
+
+    function renderMarketingTable(items) {
+        const tableBody = document.getElementById('marketing-table-body');
+        const activeBanners = document.getElementById('active-banners');
+        const activeCoupons = document.getElementById('active-coupons');
+
+        if (!tableBody) return;
+
+        tableBody.innerHTML = items.map(item => `
+            <tr>
+                <td><span class="badge ${item.type}">${item.type.toUpperCase()}</span></td>
+                <td><strong>${item.title}</strong></td>
+                <td>${item.type === 'banner' ? `<a href="${item.link}" target="_blank">Ver Link</a>` : item.value}</td>
+                <td><span style="color: ${item.status === 'active' ? 'green' : 'red'};">${item.status.toUpperCase()}</span></td>
+                <td>
+                    <button class="btn btn-edit" onclick="editMarketingItem('${item.id}')">Editar</button>
+                    <button class="btn btn-delete" onclick="deleteMarketingItem('${item.id}')">Eliminar</button>
+                </td>
+            </tr>
+        `).join('');
+
+        if (activeBanners) activeBanners.textContent = items.filter(i => i.type === 'banner' && i.status === 'active').length;
+        if (activeCoupons) activeCoupons.textContent = items.filter(i => i.type === 'discount' && i.status === 'active').length;
+    }
+
+    // Modal Marketing Helpers
+    const marketingForm = document.getElementById('marketing-form');
+    const addPromoBtn = document.getElementById('add-promo-btn');
+
+    if (addPromoBtn) {
+        addPromoBtn.addEventListener('click', () => {
+            document.getElementById('marketing-modal-title').textContent = 'Nueva Promoción / Banner';
+            marketingForm.reset();
+            document.getElementById('m-id').value = '';
+            toggleMarketingFields();
+            openMarketingModal();
+        });
+    }
+
+    if (marketingForm) {
+        marketingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('m-id').value;
+            const marketingData = {
+                type: document.getElementById('m-type').value,
+                title: document.getElementById('m-title').value,
+                value: document.getElementById('m-value').value,
+                link: document.getElementById('m-link').value,
+                status: document.getElementById('m-status').value
+            };
+
+            try {
+                if (id) {
+                    const { error } = await supabaseClient.from('marketing').update(marketingData).eq('id', id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabaseClient.from('marketing').insert([marketingData]);
+                    if (error) throw error;
+                }
+                closeMarketingModal();
+                loadMarketingItems();
+            } catch (error) {
+                console.error('Error guardando marketing:', error);
+                alert('Error al guardar. Asegúrate de que la tabla "marketing" existe en Supabase.');
+            }
+        });
+    }
+
+    window.toggleMarketingFields = () => {
+        const type = document.getElementById('m-type').value;
+        const labelTitle = document.getElementById('m-label-title');
+        const fieldValue = document.getElementById('m-field-value');
+        const labelLink = document.getElementById('m-label-link');
+
+        if (type === 'banner') {
+            labelTitle.textContent = 'Título del Banner / Alt Text';
+            fieldValue.style.display = 'none';
+            labelLink.textContent = 'URL de la Imagen (Banner)';
+        } else {
+            labelTitle.textContent = 'Código del Cupón / Título';
+            fieldValue.style.display = 'block';
+            labelLink.textContent = 'Link de Acción (Opcional)';
+        }
+    };
+
+    window.openMarketingModal = () => document.getElementById('marketing-modal').style.display = 'flex';
+    window.closeMarketingModal = () => {
+        document.getElementById('marketing-modal').style.display = 'none';
+        document.getElementById('m-preview-container').style.display = 'none';
+    };
+
+    window.handleImageUpload = async (input) => {
+        const file = input.files[0];
+        if (!file) return;
+
+        // Preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const preview = document.getElementById('m-preview');
+            const container = document.getElementById('m-preview-container');
+            preview.src = e.target.result;
+            container.style.display = 'block';
+            
+            // Si el usuario quiere guardar el base64 directamente (no recomendado para banners grandes, pero útil para prototipos)
+            // document.getElementById('m-link').value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        // Upload to Supabase Storage (Simulated/Ready for integration)
+        /*
+        const fileName = `${Date.now()}_${file.name}`;
+        const { data, error } = await supabaseClient.storage
+            .from('marketing-assets')
+            .upload(fileName, file);
+        
+        if (data) {
+            const { publicUrl } = supabaseClient.storage.from('marketing-assets').getPublicUrl(fileName);
+            document.getElementById('m-link').value = publicUrl;
+        }
+        */
+        
+        // Por ahora, solo informamos que se cargó
+        alert('Imagen cargada localmente. En una fase final, esto se subirá a Supabase Storage. Por ahora puedes usar una URL de la web.');
+    };
+
+    window.editMarketingItem = async (id) => {
+        try {
+            const { data, error } = await supabaseClient.from('marketing').select('*').eq('id', id).single();
+            if (error) throw error;
+
+            document.getElementById('marketing-modal-title').textContent = 'Editar Marketing';
+            document.getElementById('m-id').value = data.id;
+            document.getElementById('m-type').value = data.type;
+            document.getElementById('m-title').value = data.title;
+            document.getElementById('m-value').value = data.value || '';
+            document.getElementById('m-link').value = data.link || '';
+            document.getElementById('m-status').value = data.status;
+
+            // Show preview if banner
+            if (data.type === 'banner' && data.link) {
+                const preview = document.getElementById('m-preview');
+                const container = document.getElementById('m-preview-container');
+                preview.src = data.link;
+                container.style.display = 'block';
+            }
+
+            toggleMarketingFields();
+            openMarketingModal();
+        } catch (error) {
+            console.error('Error al cargar item para editar:', error);
+            alert('Error al obtener datos del servidor. Verifica la tabla "marketing".');
+        }
+    };
+
+    window.deleteMarketingItem = async (id) => {
+        if (confirm('¿Eliminar este elemento de marketing?')) {
+            try {
+                const { error } = await supabaseClient.from('marketing').delete().eq('id', id);
+                if (error) throw error;
+                loadMarketingItems();
+            } catch (error) {
+                console.error('Error al eliminar:', error);
+            }
+        }
+    };
 
     async function loadOrders() {
         try {
@@ -138,6 +326,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 price: parseFloat(document.getElementById('p-price').value),
                 image: document.getElementById('p-image').value,
                 stock: parseInt(document.getElementById('p-stock').value),
+                sku: document.getElementById('p-sku').value,
+                brand: document.getElementById('p-brand').value,
+                description: document.getElementById('p-desc').value,
+                long_description: document.getElementById('p-long-desc').value,
+                tags: document.getElementById('p-tags').value.split(',').map(t => t.trim()),
+                gallery: document.getElementById('p-gallery').value.split(',').map(t => t.trim()).filter(t => t !== ''),
                 variants: JSON.parse(document.getElementById('p-variants').value || '[]')
             };
 
@@ -233,6 +427,14 @@ window.editProduct = (id) => {
     document.getElementById('p-category').value = p.category;
     document.getElementById('p-price').value = p.price;
     document.getElementById('p-image').value = p.image;
+    document.getElementById('p-sku').value = p.sku || '';
+    document.getElementById('p-brand').value = p.brand || '';
+    document.getElementById('p-stock').value = p.stock || 110;
+    document.getElementById('p-desc').value = p.description || '';
+    document.getElementById('p-long-desc').value = p.long_description || '';
+    document.getElementById('p-tags').value = (p.tags || []).join(', ');
+    document.getElementById('p-gallery').value = (p.gallery || []).join(', ');
+    document.getElementById('p-variants').value = JSON.stringify(p.variants || []);
     
     openModal();
 };

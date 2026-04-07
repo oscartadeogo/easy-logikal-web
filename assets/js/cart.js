@@ -117,38 +117,54 @@ function updateCartUI() {
     }
 
     let subtotal = 0;
-    cartItemsContainer.innerHTML = cart.map(item => {
+    cartItemsContainer.innerHTML = `
+        <div class="cart-header-row" style="display: grid; grid-template-columns: 30px 60px 1fr 80px 80px; gap: 10px; font-size: 0.7rem; text-transform: uppercase; font-weight: bold; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;">
+            <span>X</span>
+            <span>Imagen</span>
+            <span>Producto</span>
+            <span>Precio</span>
+            <span>Cantidad</span>
+        </div>
+    ` + cart.map(item => {
         const itemTotal = item.price * item.quantity;
         subtotal += itemTotal;
         return `
-            <div class="cart-item">
-                <img src="${item.image || 'https://via.placeholder.com/80'}" alt="${item.name}" class="cart-item-img">
-                <div class="cart-item-info">
-                    <h4>${item.name}</h4>
-                    <p>$${parseFloat(item.price).toLocaleString('es-MX')} x ${item.quantity}</p>
-                    <div class="quantity-controls mt-1">
-                        <button onclick="updateQuantity(${item.id}, -1)">-</button>
-                        <span>${item.quantity}</span>
-                        <button onclick="updateQuantity(${item.id}, 1)">+</button>
-                    </div>
+            <div class="cart-item-modern" style="display: grid; grid-template-columns: 30px 60px 1fr 80px 80px; gap: 10px; align-items: center; margin-bottom: 15px; font-size: 0.85rem;">
+                <button onclick="removeFromCart(${item.id})" style="background:none; border:none; cursor:pointer; color:red; font-weight:bold;">×</button>
+                <img src="${item.image || 'https://via.placeholder.com/60'}" alt="${item.name}" style="width: 100%; border-radius: 4px;">
+                <div style="font-weight: 600;">${item.name}</div>
+                <div>$${parseFloat(item.price).toLocaleString('es-MX')}</div>
+                <div class="qty-controls" style="display: flex; border: 1px solid var(--border); border-radius: 4px;">
+                    <button onclick="updateQuantity(${item.id}, -1)" style="padding: 2px 5px; border:none; background:none; cursor:pointer;">-</button>
+                    <span style="flex:1; text-align:center;">${item.quantity}</span>
+                    <button onclick="updateQuantity(${item.id}, 1)" style="padding: 2px 5px; border:none; background:none; cursor:pointer;">+</button>
                 </div>
-                <button class="remove-item" onclick="removeFromCart(${item.id})">&times;</button>
             </div>
         `;
     }).join('');
 
-    // Tax Calculation (16% IVA México)
+    // Shipping Logic (Gratis > 499 o 2+ productos)
+    const shippingCost = (subtotal >= 499 || totalItems >= 2) ? 0 : 100;
     const tax = subtotal * 0.16;
-    const total = subtotal + tax;
+    const total = subtotal + tax + shippingCost;
 
     if (cartTotalValue) {
         cartTotalValue.innerHTML = `
-            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 400;">
-                Subtotal: $${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}<br>
-                IVA (16%): $${tax.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-            </div>
-            <div style="margin-top: 5px;">
-                Total: $${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+            <div style="border-top: 2px solid var(--secondary); padding-top: 10px; margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px;">
+                    <span>Subtotal:</span>
+                    <span>$${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; color: ${shippingCost === 0 ? 'green' : 'inherit'};">
+                    <span>Envío:</span>
+                    <span>${shippingCost === 0 ? 'GRATIS' : '$' + shippingCost.toFixed(2)}</span>
+                </div>
+                ${shippingCost === 0 ? '<p style="font-size: 0.7rem; color: green; text-align: right; margin-bottom: 5px;">✓ Envío Gratuito Aplicado</p>' : ''}
+                <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-top: 10px;">
+                    <span>TOTAL:</span>
+                    <span>$${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <p style="font-size: 0.7rem; color: #888; text-align: center; margin-top: 10px;">IVA Incluido (16%)</p>
             </div>
         `;
     }

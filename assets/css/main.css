@@ -130,6 +130,21 @@ img {
     color: var(--text-light);
 }
 
+/* Marketing Banner */
+.top-banner {
+    background-size: cover;
+    background-position: center;
+    padding: 0.8rem 0;
+    text-align: center;
+    border-bottom: 2px solid var(--primary);
+    animation: fadeInDown 0.8s ease-out;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* Header */
 .header {
     position: fixed;

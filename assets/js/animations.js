@@ -7,28 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Register GSAP Plugins
     gsap.registerPlugin(ScrollTrigger);
 
-    // 1. Page Loader Logic
-    const loader = document.querySelector('.page-loader');
-    const loaderProgress = document.querySelector('.loader-progress');
-    
-    if (loader) {
-        gsap.to(loaderProgress, {
-            width: '100%',
-            duration: 1.5,
-            ease: 'power2.inOut',
-            onComplete: () => {
-                gsap.to(loader, {
-                    opacity: 0,
-                    visibility: 'hidden',
-                    duration: 0.8,
-                    ease: 'power2.out',
-                    onComplete: startEntranceAnimations
-                });
-            }
-        });
-    } else {
-        startEntranceAnimations();
-    }
+    // 1. Start Entrance Animations Immediately
+    startEntranceAnimations();
 
     function startEntranceAnimations() {
         // Hero Section Animations
@@ -55,7 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }, '-=0.6');
     }
 
-    // 2. Page Transition Logic
+    // 2. Removed Page Transition Logic (Instant Navigation)
+    /*
     const transitionOverlay = document.createElement('div');
     transitionOverlay.className = 'page-transition-overlay';
     document.body.appendChild(transitionOverlay);
@@ -77,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+    */
 
     // 3. Smooth Header Scroll
     const header = document.querySelector('.header');
