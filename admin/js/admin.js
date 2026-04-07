@@ -14,17 +14,21 @@ let selectedProductIds = new Set();
 let currentImageResolve = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Navigation and initial load
+    // Navigation
     setupNavigation();
     
-    // Initial Load
-    await loadAdminProducts();
-    loadDashboardStats();
-
-    // Event Listeners for new features
+    // Event Listeners for new features (Must load before async calls to be ready)
     setupProductEventListeners();
     setupBulkEditorEventListeners();
     setupExcelEventListeners();
+
+    try {
+        // Initial Load
+        await loadAdminProducts();
+        loadDashboardStats();
+    } catch (e) {
+        console.error('Error en carga inicial:', e);
+    }
     
     // Initialize animations
     initDashboardAnimations();
@@ -729,54 +733,89 @@ function setVariantsToEditor(variants) {
     });
 }
 
+function switchModalTab(tabId) {
+    document.querySelectorAll('.modal-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.toggle('active', content.id === tabId);
+    });
+}
+
+// --- MODAL HELPERS ---
+function openModal() {
+    const modal = document.getElementById('product-modal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeModal() {
+    const modal = document.getElementById('product-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+window.openModal = openModal;
+window.closeModal = closeModal;
+
 // --- SAVING PRODUCT ---
 function setupProductEventListeners() {
     // Add Product Button
-    document.getElementById('add-product-btn')?.addEventListener('click', () => {
-        document.getElementById('modal-title').textContent = 'Nuevo Producto';
-        const form = document.getElementById('product-form');
-        form.reset();
-        document.getElementById('edit-id').value = '';
-        document.getElementById('p-badge').value = '';
-        document.getElementById('p-free-shipping').checked = false;
-        
-        // Reset Gallery Zones
-        document.getElementById('gallery-zones-container').innerHTML = '';
-        addGalleryUploadZone(); // Add one empty by default
-        
-        // Reset category
-        document.getElementById('p-category').value = 'juguetes';
-        document.getElementById('p-category-custom').style.display = 'none';
-        document.getElementById('p-category-custom').value = '';
+    const addBtn = document.getElementById('add-product-btn');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            console.log('Abriendo modal de nuevo producto...');
+            document.getElementById('modal-title').textContent = 'Nuevo Producto';
+            
+            const form = document.getElementById('product-form');
+            if (form) form.reset();
 
-        // Reset image previews
-        updateMainPreview('');
-        document.getElementById('main-url-container').style.display = 'none';
-        document.getElementById('gallery-url-container').style.display = 'none';
+            const editId = document.getElementById('edit-id');
+            if (editId) editId.value = '';
 
-        document.getElementById('gallery-preview-container').innerHTML = '<small style="color:#999; width:100%; text-align:center; padding: 1rem;">No hay imágenes en la galería</small>';
-        document.getElementById('variants-editor-container').innerHTML = '';
-        switchModalTab('tab-general');
-        openModal();
-    });
+            const badge = document.getElementById('p-badge');
+            if (badge) badge.value = '';
+
+            const shipping = document.getElementById('p-free-shipping');
+            if (shipping) shipping.checked = false;
+            
+            // Reset Gallery Zones
+            const galleryContainer = document.getElementById('gallery-zones-container');
+            if (galleryContainer) {
+                galleryContainer.innerHTML = '';
+                if (typeof window.addGalleryUploadZone === 'function') {
+                    window.addGalleryUploadZone(); 
+                }
+            }
+            
+            // Reset category
+            const categorySelect = document.getElementById('p-category');
+            if (categorySelect) categorySelect.value = 'juguetes';
+            
+            const categoryCustom = document.getElementById('p-category-custom');
+            if (categoryCustom) {
+                categoryCustom.style.display = 'none';
+                categoryCustom.value = '';
+            }
+
+            // Reset image previews
+            if (typeof window.updateMainPreview === 'function') {
+                window.updateMainPreview('');
+            }
+            
+            const urlContainer = document.getElementById('main-url-container');
+            if (urlContainer) urlContainer.style.display = 'none';
+
+            const variantContainer = document.getElementById('variants-editor-container');
+            if (variantContainer) variantContainer.innerHTML = '';
+
+            switchModalTab('tab-general');
+            openModal();
+        });
+    }
 
     // Drag & Drop Listeners
     setupDropzone('main-image-dropzone', (file) => {
         const dummyInput = { files: [file] };
         handleImageProcessing(dummyInput, 'p-image', updateMainPreview);
-    });
-
-    setupDropzone('gallery-dropzone', (file) => {
-        const dummyInput = { files: [file] };
-        handleGalleryUpload(dummyInput);
-    });
-
-    // Add Enter listener for gallery URL
-    document.getElementById('p-gallery-input')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addUrlToGallery();
-        }
     });
 
     // Tab Switching Logic
@@ -810,8 +849,8 @@ function setupProductEventListeners() {
                 status: document.getElementById('p-status') ? document.getElementById('p-status').value : 'active',
                 badge: document.getElementById('p-badge').value,
                 tags: document.getElementById('p-tags').value.split(',').map(t => t.trim()).filter(t => t !== ''),
-        gallery: getGalleryFromZones(),
-        variants: getVariantsFromEditor(),
+                gallery: getGalleryFromZones(),
+                variants: getVariantsFromEditor(),
                 shipping_info: {
                     free_shipping: document.getElementById('p-free-shipping').checked,
                     cost: 0
@@ -838,28 +877,18 @@ function setupProductEventListeners() {
     }
 
     // Search functionality
-    document.getElementById('admin-product-search')?.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const rows = document.querySelectorAll('#product-table-body tr');
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(term) ? '' : 'none';
+    const searchInput = document.getElementById('admin-product-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#product-table-body tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
         });
-    });
+    }
 }
-
-function switchModalTab(tabId) {
-    document.querySelectorAll('.modal-tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
-    });
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.toggle('active', content.id === tabId);
-    });
-}
-
-// --- MODAL HELPERS ---
-window.openModal = () => document.getElementById('product-modal').style.display = 'flex';
-window.closeModal = () => document.getElementById('product-modal').style.display = 'none';
 
 window.editProduct = (id) => {
     const p = adminProducts.find(prod => prod.id === id);
