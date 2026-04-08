@@ -3,7 +3,14 @@
  * Managing the shopping cart and checkout process
  */
 
-let cart = JSON.parse(localStorage.getItem('easy_logikal_cart')) || [];
+let cart = [];
+try {
+    const savedCart = localStorage.getItem('easy_logikal_cart');
+    cart = savedCart ? JSON.parse(savedCart) : [];
+} catch (e) {
+    console.warn('Error loading cart from localStorage:', e);
+    cart = [];
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Inject Cart Drawer if not exists
@@ -278,14 +285,33 @@ function updateCheckoutUI() {
 }
 
 function openCart() {
-    document.getElementById('cart-drawer').classList.add('open');
-    document.getElementById('cart-overlay').classList.add('visible');
-    document.body.style.overflow = 'hidden';
+    const drawer = document.getElementById('cart-drawer');
+    const overlay = document.getElementById('cart-overlay');
+    
+    if (drawer && overlay) {
+        drawer.classList.add('open');
+        overlay.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+    } else {
+        // If elements are missing for some reason, re-inject and try again
+        injectCartDrawer();
+        const newDrawer = document.getElementById('cart-drawer');
+        const newOverlay = document.getElementById('cart-overlay');
+        if (newDrawer && newOverlay) {
+            newDrawer.classList.add('open');
+            newOverlay.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+            updateCartUI();
+        }
+    }
 }
 
 function closeCart() {
-    document.getElementById('cart-drawer').classList.remove('open');
-    document.getElementById('cart-overlay').classList.remove('visible');
+    const drawer = document.getElementById('cart-drawer');
+    const overlay = document.getElementById('cart-overlay');
+    
+    if (drawer) drawer.classList.remove('open');
+    if (overlay) overlay.classList.remove('visible');
     document.body.style.overflow = 'auto';
 }
 
