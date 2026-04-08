@@ -161,7 +161,13 @@ function renderFeatured(items, container) {
 
 function renderProducts(productsToRender) {
     const container = document.getElementById('product-container');
-    if (!container) return;
+    if (!container) {
+        console.error('❌ NO ENCONTRÉ product-container!');
+        return;
+    }
+    
+    console.log('📍 Container encontrado:', container);
+    console.log('Display actual:', window.getComputedStyle(container).display);
     
     if (!productsToRender || productsToRender.length === 0) {
         container.innerHTML = `
@@ -179,12 +185,21 @@ function renderProducts(productsToRender) {
     
     const html = productsToRender.map(product => createProductCard(product, 'catalog')).join('');
     console.log(`📝 Renderizando ${productsToRender.length} productos...`);
-    console.log('🔍 Primer producto HTML:', html.substring(0, 200));
+    console.log('🔍 HTML generad:', html.substring(0, 300));
+    
+    // LIMPIAR para asegurar nuevos elementos
+    container.innerHTML = '';
+    
+    // Insertar HTML lentamente
     container.innerHTML = html;
-    console.log(`✅ ${productsToRender.length} tarjetas insertas en el DOM`);
+    
+    console.log(`✅ ${productsToRender.length} tarjetas insertas`);
+    console.log('📊 Total cards en DOM:', document.querySelectorAll('.product-card').length);
+    console.log('🔍 Container HTML inners:', container.innerHTML.substring(0, 200));
     
     // GSAP animations
     if (window.gsap) {
+        console.log('⚡ Aplicando animaciones GSAP...');
         gsap.from('.product-card', {
             scrollTrigger: {
                 trigger: container,
