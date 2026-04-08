@@ -460,13 +460,13 @@
                         ${p.materials ? `
                             <div class="mb-2">
                                 <strong>Materiales:</strong>
-                                <p>${p.materials}</p>
+                                <div class="mt-1">${p.materials}</div>
                             </div>
                         ` : ''}
                         ${p.technical_details ? `
                             <div>
                                 <strong>Detalles Técnicos:</strong>
-                                <p>${p.technical_details}</p>
+                                <div class="mt-1">${p.technical_details}</div>
                             </div>
                         ` : ''}
                         ${!p.materials && !p.technical_details ? '<p class="text-muted">No hay detalles adicionales disponibles.</p>' : ''}
