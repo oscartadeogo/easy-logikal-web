@@ -368,15 +368,8 @@ function updateCartUI() {
                 </div>
             </div>
         `;
-        // Hide subtotal footer if empty
-        const footer = document.querySelector('.cart-footer');
-        if (footer) footer.style.display = 'none';
         return;
     }
-
-    // Show subtotal footer if not empty
-    const footer = document.querySelector('.cart-footer');
-    if (footer) footer.style.display = 'block';
 
     let subtotal = 0;
     cartItemsContainer.innerHTML = `

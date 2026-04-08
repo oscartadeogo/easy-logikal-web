@@ -1781,9 +1781,9 @@ img {
 .cart-drawer {
     position: fixed;
     top: 0;
-    right: -100%;
+    right: 0; /* Change this to 0 */
     width: 100%;
-    max-width: 450px; /* More compact width */
+    max-width: 450px;
     height: 100%;
     background-color: var(--bg-main);
     z-index: 2000;
@@ -1791,10 +1791,11 @@ img {
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
+    transform: translate3d(100%, 0, 0); /* Start hidden to the right */
 }
 
 .cart-drawer.open {
-    transform: translate3d(-100%, 0, 0);
+    transform: translate3d(0, 0, 0); /* Move into view */
 }
 
 .compact-cart-item {

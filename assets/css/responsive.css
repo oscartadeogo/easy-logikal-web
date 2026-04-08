@@ -126,7 +126,13 @@
     
     .cart-drawer {
         width: 100%;
-        right: -100%;
+        max-width: 100%;
+        right: 0;
+        transform: translate3d(100%, 0, 0);
+    }
+    
+    .cart-drawer.open {
+        transform: translate3d(0, 0, 0);
     }
 }
 
