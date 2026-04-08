@@ -63,17 +63,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const searchInput = document.getElementById('product-search');
 
     async function loadProducts() {
-        if (!productContainer && !document.getElementById('home-featured-products')) return;
+        const homeFeatured = document.getElementById('home-featured-products');
+        if (!productContainer && !homeFeatured) return;
         
         try {
+            console.log('Cargando productos desde Supabase...');
             const { data, error } = await supabaseClient
                 .from('products')
                 .select('*')
-                .eq('status', 'active')
+                .neq('status', 'deleted') // Cargar todos excepto eliminados
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
             
+            console.log('Productos cargados:', data.length);
             allProducts = data;
             
             // Actualizar categorías dinámicamente si estamos en la página de productos
@@ -81,9 +84,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 renderDynamicCategories();
             }
 
-            if (productContainer) renderProducts(allProducts);
-            if (document.getElementById('home-featured-products')) {
-                renderFeatured(allProducts);
+            if (productContainer) {
+                applyAllFilters(); // Usar filtros iniciales en lugar de render directo
+            }
+            
+            if (homeFeatured) {
+                // Filtrar solo los activos para el inicio
+                const activeOnes = allProducts.filter(p => p.status === 'active');
+                renderFeatured(activeOnes, homeFeatured);
             }
         } catch (error) {
             console.error('Error loading products:', error);
@@ -92,9 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 allProducts = products;
             }
             if (productContainer) renderProducts(allProducts);
-            if (document.getElementById('home-featured-products')) {
-                renderFeatured(allProducts);
-            }
+            if (homeFeatured) renderFeatured(allProducts, homeFeatured);
         }
     }
 
