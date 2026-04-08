@@ -180,7 +180,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p class="product-price">$${parseFloat(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <div class="product-actions" onclick="event.stopPropagation()">
-                    <button class="btn btn-primary" onclick="window.location.href='pages/producto.html?id=${product.id}'">Ver Producto</button>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <button class="btn btn-primary btn-sm" onclick="window.location.href='pages/producto.html?id=${product.id}'">Ver Detalle</button>
+                        <button class="btn btn-outline btn-sm" onclick="addToCart(${product.id})">Añadir al Carrito</button>
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -461,8 +464,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p class="product-price">$${parseFloat(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <div class="product-actions" onclick="event.stopPropagation()">
-                    <button class="btn btn-primary" onclick="window.location.href='producto.html?id=${product.id}'">Ver Detalles</button>
-                    <button class="btn btn-outline" onclick="addToCart(${product.id})">Agregar</button>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <button class="btn btn-primary btn-sm" onclick="window.location.href='producto.html?id=${product.id}'">Ver Detalle</button>
+                        <button class="btn btn-outline btn-sm" onclick="addToCart(${product.id})">Añadir al Carrito</button>
+                    </div>
                 </div>
             </div>
         `).join('');
