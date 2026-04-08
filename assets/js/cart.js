@@ -43,52 +43,248 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function injectCartDrawer() {
-    if (document.getElementById('cart-drawer')) return; // Already exists
+    if (document.getElementById('cart-drawer')) return;
 
     const drawerHTML = `
         <div class="cart-drawer" id="cart-drawer">
             <div class="cart-drawer-header">
-                <h2>Tu Carrito</h2>
+                <h2>Tu Pedido</h2>
                 <button id="cart-close">&times;</button>
             </div>
-            <div class="cart-items" id="cart-items">
-                <p class="empty-cart-msg">Tu carrito está vacío.</p>
-            </div>
             
-            <div class="cart-customer-info" style="padding: 1rem; border-top: 1px solid var(--border);">
-                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Tus Datos</h4>
-                <div class="form-group" style="margin-bottom: 0.5rem;">
-                    <input type="text" id="cart-cust-name" placeholder="Nombre completo" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem;">
+            <div id="cart-view-container" class="cart-view-active">
+                <div class="cart-items" id="cart-items">
+                    <p class="empty-cart-msg">Tu carrito está vacío.</p>
                 </div>
-                <div class="form-group">
-                    <input type="email" id="cart-cust-email" placeholder="Correo electrónico" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem;">
-                </div>
-            </div>
-
-            <div class="cart-payment-options" style="padding: 1rem; border-top: 1px solid var(--border);">
-                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-main);">Método de Pago</h4>
-                <div style="margin-bottom: 0.5rem;">
-                    <input type="radio" id="pay-card" name="payment-method" value="card" checked>
-                    <label for="pay-card" style="font-size: 0.85rem; cursor: pointer;">Tarjeta Crédito / Débito (Stripe)</label>
-                </div>
-                <div>
-                    <input type="radio" id="pay-transfer" name="payment-method" value="transfer">
-                    <label for="pay-transfer" style="font-size: 0.85rem; cursor: pointer;">Transferencia Bancaria</label>
+                <div class="cart-footer">
+                    <div class="cart-actions-main">
+                        <button class="btn btn-outline w-100 mb-1" id="view-cart-btn">VER CARRITO</button>
+                        <button class="btn btn-primary w-100" id="checkout-view-btn">FINALIZAR COMPRA</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="cart-footer">
-                <div class="cart-total">
-                    <span>Total estimado:</span>
-                    <span id="cart-total-value">$0.00</span>
+            <div id="checkout-view-container" style="display: none; overflow-y: auto; height: calc(100% - 70px); padding: 2rem;">
+                <button class="btn btn-sm btn-outline mb-2" onclick="showCartView()">← Volver al carrito</button>
+                
+                <div class="checkout-section">
+                    <h3>Detalles de Facturación</h3>
+                    <div class="checkout-form-grid">
+                        <div class="form-group full-width">
+                            <label>Email *</label>
+                            <input type="email" id="f-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre *</label>
+                            <input type="text" id="f-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido *</label>
+                            <input type="text" id="f-lname" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>País/Región *</label>
+                            <select id="f-country">
+                                <option value="MX">México</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Dirección De La Calle *</label>
+                            <input type="text" id="f-address" placeholder="Número de casa y nombre de la calle" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Colonia, Apartamento, Habitación, Escalera, Etc. (Opcional)</label>
+                            <input type="text" id="f-extra">
+                        </div>
+                        <div class="form-group">
+                            <label>Localidad / Ciudad *</label>
+                            <input type="text" id="f-city" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Región / Estado *</label>
+                            <input type="text" id="f-state" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Código Postal *</label>
+                            <input type="text" id="f-zip" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono *</label>
+                            <input type="tel" id="f-phone" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="f-newsletter">
+                            Sign Me Up To Receive Email Updates And News (Opcional)
+                        </label>
+                    </div>
+
+                    <div class="mt-2">
+                        <label class="checkbox-item" onclick="toggleShippingAddress()">
+                            <input type="checkbox" id="f-diff-address">
+                            ¿Enviar A Una Dirección Diferente?
+                        </label>
+                    </div>
+
+                    <div id="shipping-address-fields" style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 1px dashed var(--border);">
+                        <h3>Dirección de Envío</h3>
+                        <div class="checkout-form-grid">
+                            <div class="form-group">
+                                <label>Nombre *</label>
+                                <input type="text" id="s-name">
+                            </div>
+                            <div class="form-group">
+                                <label>Apellido *</label>
+                                <input type="text" id="s-lname">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>País/Región *</label>
+                                <select id="s-country">
+                                    <option value="MX">México</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Dirección De La Calle *</label>
+                                <input type="text" id="s-address">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Colonia, Apartamento, Habitación, Escalera, Etc. (Opcional)</label>
+                                <input type="text" id="s-extra">
+                            </div>
+                            <div class="form-group">
+                                <label>Localidad / Ciudad *</label>
+                                <input type="text" id="s-city">
+                            </div>
+                            <div class="form-group">
+                                <label>Región / Estado *</label>
+                                <input type="text" id="s-state">
+                            </div>
+                            <div class="form-group">
+                                <label>Código Postal *</label>
+                                <input type="text" id="s-zip">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width mt-2">
+                        <label>Indicaciones Del Pedido (Opcional)</label>
+                        <textarea id="f-notes" rows="3" placeholder="Notas sobre tu pedido, ej. notas especiales para la entrega."></textarea>
+                    </div>
                 </div>
-                <button class="btn btn-primary w-100" id="checkout-btn">Proceder al Pago</button>
-                <p class="cart-note">* Los precios son informativos para cotización.</p>
+
+                <div class="order-summary-box">
+                    <h3>Tu Pedido</h3>
+                    <div id="checkout-items-list"></div>
+                    <div id="checkout-totals"></div>
+                    
+                    <div class="payment-methods">
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="paypal" checked>
+                            <span>PayPal <strong>PayPal</strong></span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="mercadopago_cash">
+                            <span>Pagos Sin Tarjeta De Mercado Pago</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="mercadopago">
+                            <span>Mercado Pago <strong>Mercado Pago</strong></span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="card">
+                            <span>Tarjeta De Crédito O Débito</span>
+                        </label>
+                    </div>
+
+                    <p class="legal-text mt-2" style="font-size: 0.8rem; color: var(--text-muted);">
+                        Tus datos personales se utilizarán para procesar tu pedido, mejorar tu experiencia en esta web y otros propósitos descritos en nuestra política de privacidad.
+                    </p>
+                    
+                    <label class="checkbox-item mt-1" style="font-size: 0.85rem;">
+                        <input type="checkbox" id="f-terms" required>
+                        He Leído Y Estoy De Acuerdo Con Los Términos Y Condiciones Del Sitio Web *
+                    </label>
+
+                    <button class="btn btn-primary w-100 mt-2" id="place-order-btn">REALIZAR PEDIDO</button>
+                </div>
             </div>
         </div>
         <div class="cart-overlay" id="cart-overlay"></div>
     `;
     document.body.insertAdjacentHTML('beforeend', drawerHTML);
+
+    // Event Listeners for new buttons
+    document.getElementById('checkout-view-btn').addEventListener('click', showCheckoutView);
+    document.getElementById('view-cart-btn').addEventListener('click', showFullCartView);
+}
+
+function showCartView() {
+    document.getElementById('cart-view-container').style.display = 'block';
+    document.getElementById('checkout-view-container').style.display = 'none';
+}
+
+function showCheckoutView() {
+    if (cart.length === 0) {
+        alert('Tu carrito está vacío.');
+        return;
+    }
+    document.getElementById('cart-view-container').style.display = 'none';
+    document.getElementById('checkout-view-container').style.display = 'block';
+    updateCheckoutUI();
+}
+
+function showFullCartView() {
+    // This could redirect to a dedicated page, or show a large modal
+    // For now, we keep the drawer view but could expand it
+    openCart();
+}
+
+function toggleShippingAddress() {
+    const fields = document.getElementById('shipping-address-fields');
+    fields.style.display = document.getElementById('f-diff-address').checked ? 'block' : 'none';
+}
+
+function updateCheckoutUI() {
+    const list = document.getElementById('checkout-items-list');
+    const totals = document.getElementById('checkout-totals');
+    
+    let subtotal = 0;
+    list.innerHTML = cart.map(item => {
+        const itemTotal = item.price * item.quantity;
+        subtotal += itemTotal;
+        return `
+            <div class="summary-row">
+                <span>${item.name} × ${item.quantity}</span>
+                <span>$${itemTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+            </div>
+        `;
+    }).join('');
+
+    const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+    const shippingCost = (subtotal >= 499 || totalItems >= 2) ? 0 : 100;
+    const total = subtotal + shippingCost;
+
+    totals.innerHTML = `
+        <div class="summary-row">
+            <span>Subtotal</span>
+            <span>$${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+        </div>
+        <div class="summary-row">
+            <div>
+                <span>Envío</span>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">
+                    ${shippingCost === 0 ? 'Envío Gratuito En 2 Productos O Más' : 'Envío Estándar: $100.00'}
+                </p>
+            </div>
+            <span>${shippingCost === 0 ? 'GRATIS' : '$100.00'}</span>
+        </div>
+        <div class="summary-row total">
+            <span>Total</span>
+            <span>$${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+        </div>
+    `;
 }
 
 function openCart() {
@@ -153,7 +349,6 @@ function saveCart() {
 function updateCartUI() {
     const cartItemsContainer = document.getElementById('cart-items');
     const cartCountElements = document.querySelectorAll('.cart-count');
-    const cartTotalValue = document.getElementById('cart-total-value');
 
     if (!cartItemsContainer) return;
 
@@ -164,62 +359,72 @@ function updateCartUI() {
     // Update List
     if (cart.length === 0) {
         cartItemsContainer.innerHTML = '<p class="empty-cart-msg">Tu carrito está vacío.</p>';
-        if (cartTotalValue) cartTotalValue.textContent = '$0.00';
         return;
     }
 
     let subtotal = 0;
     cartItemsContainer.innerHTML = `
-        <div class="cart-header-row" style="display: grid; grid-template-columns: 30px 60px 1fr 80px 80px; gap: 10px; font-size: 0.7rem; text-transform: uppercase; font-weight: bold; border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;">
-            <span>X</span>
-            <span>Imagen</span>
-            <span>Producto</span>
-            <span>Precio</span>
-            <span>Cantidad</span>
+        <div class="cart-table-container">
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th>Eliminar</th>
+                        <th>Imagen</th>
+                        <th>Producto</th>
+                        <th>Precio</th>
+                        <th>Cantidad</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${cart.map(item => {
+                        const itemTotal = item.price * item.quantity;
+                        subtotal += itemTotal;
+                        return `
+                            <tr>
+                                <td><button class="cart-item-remove" onclick="removeFromCart(${item.id})">×</button></td>
+                                <td><img src="${item.image || 'https://via.placeholder.com/80'}" class="cart-thumb" alt="${item.name}"></td>
+                                <td style="font-weight: 600;">${item.name}</td>
+                                <td>$${parseFloat(item.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                                <td>
+                                    <div class="qty-controls" style="display: flex; border: 1px solid var(--border); border-radius: 4px; max-width: 100px;">
+                                        <button onclick="updateQuantity(${item.id}, -1)" style="padding: 5px 10px; border:none; background:none; cursor:pointer;">-</button>
+                                        <span style="flex:1; text-align:center; padding: 5px 0;">${item.quantity}</span>
+                                        <button onclick="updateQuantity(${item.id}, 1)" style="padding: 5px 10px; border:none; background:none; cursor:pointer;">+</button>
+                                    </div>
+                                </td>
+                                <td style="font-weight: 700;">$${itemTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
         </div>
-    ` + cart.map(item => {
-        const itemTotal = item.price * item.quantity;
-        subtotal += itemTotal;
-        return `
-            <div class="cart-item-modern" style="display: grid; grid-template-columns: 30px 60px 1fr 80px 80px; gap: 10px; align-items: center; margin-bottom: 15px; font-size: 0.85rem;">
-                <button onclick="removeFromCart(${item.id})" style="background:none; border:none; cursor:pointer; color:red; font-weight:bold;">×</button>
-                <img src="${item.image || 'https://via.placeholder.com/60'}" alt="${item.name}" style="width: 100%; border-radius: 4px;">
-                <div style="font-weight: 600;">${item.name}</div>
-                <div>$${parseFloat(item.price).toLocaleString('es-MX')}</div>
-                <div class="qty-controls" style="display: flex; border: 1px solid var(--border); border-radius: 4px;">
-                    <button onclick="updateQuantity(${item.id}, -1)" style="padding: 2px 5px; border:none; background:none; cursor:pointer;">-</button>
-                    <span style="flex:1; text-align:center;">${item.quantity}</span>
-                    <button onclick="updateQuantity(${item.id}, 1)" style="padding: 2px 5px; border:none; background:none; cursor:pointer;">+</button>
-                </div>
+        
+        <div class="cart-totals-section" style="max-width: 400px; margin-left: auto; background: #f9f9f9; padding: 2rem; border-radius: 12px;">
+            <h3 style="margin-bottom: 1.5rem; border-bottom: 2px solid var(--primary); display: inline-block;">Total del carrito</h3>
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span>$${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
             </div>
-        `;
-    }).join('');
-
-    // Shipping Logic (Gratis > 499 o 2+ productos)
-    const shippingCost = (subtotal >= 499 || totalItems >= 2) ? 0 : 100;
-    const tax = subtotal * 0.16;
-    const total = subtotal + tax + shippingCost;
-
-    if (cartTotalValue) {
-        cartTotalValue.innerHTML = `
-            <div style="border-top: 2px solid var(--secondary); padding-top: 10px; margin-top: 10px;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px;">
-                    <span>Subtotal:</span>
-                    <span>$${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+            <div class="summary-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                <div style="width: 100%; display: flex; justify-content: space-between;">
+                    <span>Envío</span>
+                    <span>${(subtotal >= 499 || totalItems >= 2) ? 'GRATIS' : '$100.00'}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 5px; color: ${shippingCost === 0 ? 'green' : 'inherit'};">
-                    <span>Envío:</span>
-                    <span>${shippingCost === 0 ? 'GRATIS' : '$' + shippingCost.toFixed(2)}</span>
-                </div>
-                ${shippingCost === 0 ? '<p style="font-size: 0.7rem; color: green; text-align: right; margin-bottom: 5px;">✓ Envío Gratuito Aplicado</p>' : ''}
-                <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-top: 10px;">
-                    <span>TOTAL:</span>
-                    <span>$${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <p style="font-size: 0.7rem; color: #888; text-align: center; margin-top: 10px;">IVA Incluido (16%)</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">
+                    ${(subtotal >= 499 || totalItems >= 2) ? 'Envío Gratuito En 2 Productos O Más' : 'Envío Estándar: $100.00'}
+                </p>
+                <p style="font-size: 0.85rem;">Enviar a <strong>Estado de México</strong>.</p>
+                <button class="btn btn-sm btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Cambiar dirección</button>
             </div>
-        `;
-    }
+            <div class="summary-row total">
+                <span>Total</span>
+                <span>$${(subtotal + ((subtotal >= 499 || totalItems >= 2) ? 0 : 100)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+            </div>
+            <button class="btn btn-primary w-100 mt-1" onclick="showCheckoutView()">CONTINUAR</button>
+        </div>
+    `;
 }
 
 async function handleCheckout() {

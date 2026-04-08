@@ -228,28 +228,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (document.getElementById('quote-modal')) return;
         const modalHTML = `
             <div class="modal" id="quote-modal">
-                <div class="modal-content">
+                <div class="modal-content quote-modal-content">
                     <span class="close-modal-btn" onclick="closeQuoteModal()">&times;</span>
-                    <h2>Solicitar Cotización <span>Express</span></h2>
-                    <p>Completa tus datos y un asesor te contactará en menos de 24 horas.</p>
-                    <form id="quick-quote-form" class="mt-2">
+                    <div class="quote-header">
+                        <div class="quote-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        </div>
+                        <h2>Solicitar Cotización <span>Express</span></h2>
+                        <p>Completa tus datos y un asesor te contactará en menos de 24 horas.</p>
+                    </div>
+                    <form id="quick-quote-form" class="mt-2 quote-form-grid">
                         <div class="form-group">
-                            <label>Nombre Completo</label>
+                            <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Nombre Completo</label>
                             <input type="text" id="q-name" placeholder="Ej. Juan Pérez" required>
                         </div>
                         <div class="form-group">
-                            <label>WhatsApp / Teléfono</label>
+                            <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg> WhatsApp / Teléfono</label>
                             <input type="tel" id="q-phone" placeholder="55 1234 5678" required>
                         </div>
-                        <div class="form-group">
-                            <label>Producto de Interés</label>
+                        <div class="form-group full-width">
+                            <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg> Producto de Interés</label>
                             <input type="text" id="q-product" placeholder="Nombre del producto o categoría">
                         </div>
-                        <div class="form-group">
-                            <label>Mensaje</label>
+                        <div class="form-group full-width">
+                            <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> Mensaje</label>
                             <textarea id="q-message" rows="3" placeholder="¿Cuántas piezas necesitas?"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 mt-1" id="q-submit">Enviar Solicitud</button>
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mt-1" id="q-submit">
+                            <span>ENVIAR SOLICITUD</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -303,7 +311,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Global "Cotizar" button behavior
     document.querySelectorAll('.btn-primary').forEach(btn => {
-        if (btn.textContent.trim().toLowerCase() === 'cotizar') {
+        const btnText = btn.textContent.trim().toLowerCase();
+        if (btnText === 'cotizar' || btnText === 'contactar ahora') {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 openQuoteModal();
