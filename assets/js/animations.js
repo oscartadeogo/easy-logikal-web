@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     startEntranceAnimations();
 
     function startEntranceAnimations() {
+        // Only run if hero title exists
+        if (!document.querySelector('.hero-title')) return;
+
         // Hero Section Animations
         const heroTl = gsap.timeline();
         
@@ -89,37 +92,51 @@ document.addEventListener('DOMContentLoaded', () => {
         if (direction === 'up') y = 30;
         if (direction === 'down') y = -30;
 
-        gsap.from(item, {
-            scrollTrigger: {
-                trigger: item,
-                start: 'top 92%',
-                toggleActions: 'play none none none'
+        // Ensure visibility immediately if already in view or using a safer approach
+        gsap.fromTo(item, 
+            {
+                x: x,
+                y: y,
+                opacity: 0
             },
-            x: x,
-            y: y,
-            opacity: 0,
-            duration: 0.8,
-            ease: 'power2.out',
-            clearProps: 'all'
-        });
+            {
+                scrollTrigger: {
+                    trigger: item,
+                    start: 'top 92%',
+                    toggleActions: 'play none none none',
+                    // Force refresh if needed
+                },
+                x: 0,
+                y: 0,
+                opacity: 1,
+                duration: 0.8,
+                ease: 'power2.out',
+                clearProps: 'all'
+            }
+        );
     });
 
-    // 5. Image Reveal Interaction (Cleaned Up)
+    // 5. Image Reveal Interaction (Cleaned Up & Fixed)
     const imgWrappers = document.querySelectorAll('.image-wrapper:not(.no-reveal)');
     imgWrappers.forEach(wrapper => {
+        // Only add overlay if it doesn't exist
+        if (wrapper.querySelector('.reveal-img-overlay')) return;
+        
         const overlay = document.createElement('div');
         overlay.className = 'reveal-img-overlay';
         wrapper.style.position = 'relative';
         wrapper.style.overflow = 'hidden';
         wrapper.appendChild(overlay);
 
+        gsap.set(overlay, { xPercent: -101 }); // Ensure it starts off-screen
+
         gsap.to(overlay, {
             scrollTrigger: {
                 trigger: wrapper,
                 start: 'top 85%',
             },
-            xPercent: 100,
-            duration: 1,
+            xPercent: 101, // Move it completely to the other side
+            duration: 1.2,
             ease: 'power2.inOut'
         });
     });

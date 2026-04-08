@@ -53,7 +53,6 @@
 
 /* Scroll Reveal Base */
 [data-reveal] {
-    opacity: 0;
     will-change: transform, opacity;
 }
 

@@ -175,37 +175,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
         `).join('');
-        initRevealAnimations();
-    }
-
-    function initRevealAnimations() {
-        if (!window.gsap || !window.ScrollTrigger) return;
         
-        gsap.registerPlugin(ScrollTrigger);
-
-        document.querySelectorAll('[data-reveal]').forEach(el => {
-            const direction = el.getAttribute('data-reveal');
-            let x = 0, y = 0;
-
-            if (direction === 'up') y = 50;
-            if (direction === 'down') y = -50;
-            if (direction === 'left') x = -50;
-            if (direction === 'right') x = 50;
-
-            gsap.from(el, {
-                x: x,
-                y: y,
-                opacity: 0,
-                duration: 1,
-                ease: 'power3.out',
-                scrollTrigger: {
-                    trigger: el,
-                    start: 'top 85%',
-                    toggleActions: 'play none none none'
-                }
-            });
-        });
+        // Let animations.js handle the reveal, just refresh ScrollTrigger
+        if (window.ScrollTrigger) ScrollTrigger.refresh();
     }
+
+    // Removed local reveal animations logic - now handled globally by animations.js
+
 
     // Advanced Search & Suggestions
     const searchSuggestions = document.createElement('div');
