@@ -500,23 +500,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         searchInput.addEventListener('input', applyAllFilters);
     }
 
-    // Mobile Menu Logic
+    // Mobile Menu Logic with Performance focus
     const navToggle = document.getElementById('nav-toggle');
     const navMenu = document.getElementById('nav-menu');
 
     if (navToggle && navMenu) {
         navToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
+            const isActive = navMenu.classList.toggle('active');
             navToggle.classList.toggle('active');
             
-            // Toggle body scroll
-            if (navMenu.classList.contains('active')) {
+            // Toggle body scroll and use transform for menu animation
+            if (isActive) {
                 document.body.style.overflow = 'hidden';
+                // Small delay to ensure transform is ready
+                requestAnimationFrame(() => {
+                    navMenu.style.visibility = 'visible';
+                });
             } else {
                 document.body.style.overflow = 'auto';
+                setTimeout(() => {
+                    if (!navMenu.classList.contains('active')) {
+                        navMenu.style.visibility = 'hidden';
+                    }
+                }, 400); // Match CSS transition duration
             }
         });
     }
+
+    // Performance: Throttle Scroll Events
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+        if (!scrollTimeout) {
+            scrollTimeout = setTimeout(() => {
+                scrollTimeout = null;
+                // Scroll-based logic here if needed
+            }, 50); // ~20fps for scroll logic is enough
+        }
+    }, { passive: true });
 });
 
 // Remove Blog logic if exists

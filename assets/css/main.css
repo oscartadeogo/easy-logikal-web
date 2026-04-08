@@ -40,26 +40,54 @@
     --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Global Hardware Acceleration */
+/* Global Hardware Acceleration & Optimization */
 * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-[data-reveal], .product-card, .category-card, .btn, .nav-link, .modal-content {
+/* Optimized Will-Change: Only on elements that actually animate */
+.product-card, .category-card, .btn, .nav-link, .modal-content, [data-reveal] {
     will-change: transform, opacity;
-    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* Layout Containment for better performance during animations */
+.section, .container, .product-grid, .categories-grid {
+    contain: content;
+}
+
+/* Media Query for Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+        animation-delay: -1ms !important;
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        background-attachment: initial !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+    }
 }
 
 /* Scroll Reveal Base */
 [data-reveal] {
-    will-change: transform, opacity;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out), visibility 0.6s;
 }
 
-[data-reveal="up"] { transform: translateY(30px); }
-[data-reveal="down"] { transform: translateY(-30px); }
-[data-reveal="left"] { transform: translateX(-40px); }
-[data-reveal="right"] { transform: translateX(40px); }
+[data-reveal].active {
+    opacity: 1;
+    visibility: visible;
+    transform: translate3d(0, 0, 0) !important;
+}
+
+[data-reveal="up"] { transform: translate3d(0, 30px, 0); }
+[data-reveal="down"] { transform: translate3d(0, -30px, 0); }
+[data-reveal="left"] { transform: translate3d(-40px, 0, 0); }
+[data-reveal="right"] { transform: translate3d(40px, 0, 0); }
 
 /* Base Reset */
 *, *::before, *::after {
@@ -325,7 +353,7 @@ img {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Header */
+/* Header State Optimization */
 .header {
     position: fixed;
     top: 0;
@@ -335,7 +363,16 @@ img {
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border);
     z-index: 1000;
-    transition: var(--transition-base);
+    transition: transform 0.4s var(--ease-out), background-color 0.4s var(--ease-out);
+}
+
+.header-hidden {
+    transform: translate3d(0, -100%, 0);
+}
+
+.header.scrolled {
+    background-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
 .header-container {
