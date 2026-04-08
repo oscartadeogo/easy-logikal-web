@@ -10,6 +10,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const productContainer = document.getElementById('product-container');
     const categoryFilters = document.querySelectorAll('.filter-btn');
     const searchInput = document.getElementById('product-search');
+    
+    // Inicializar elementos de filtra ANTES de cargar productos
+    const priceRange = document.getElementById('price-range');
+    const priceLabel = document.getElementById('price-max-label');
+    const stockOnly = document.getElementById('stock-only');
+    const sortProducts = document.getElementById('sort-products');
+    const resetFilters = document.getElementById('reset-filters');
+    const currentCount = document.getElementById('current-count');
 
     async function loadProducts() {
         const homeFeatured = document.getElementById('home-featured-products');
@@ -311,14 +319,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Advanced Filtering Logic
-    const priceRange = document.getElementById('price-range');
-    const priceLabel = document.getElementById('price-max-label');
-    const stockOnly = document.getElementById('stock-only');
-    const sortProducts = document.getElementById('sort-products');
-    const resetFilters = document.getElementById('reset-filters');
-    const currentCount = document.getElementById('current-count');
-
+    // Advanced Filtering Logic - Event Listeners
     if (priceRange) {
         priceRange.addEventListener('input', (e) => {
             priceLabel.textContent = `$${parseInt(e.target.value).toLocaleString()}+`;
