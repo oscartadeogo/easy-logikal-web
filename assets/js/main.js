@@ -3,57 +3,6 @@
  * Handling Product Loading and Filtering
  */
 
-const products = [
-    {
-        id: 1,
-        name: "Maisto 1:24 Assembly Line - Ferrari",
-        category: "maisto",
-        price: 850.00,
-        image: "https://images.unsplash.com/photo-1592198084033-aade902d1aae?auto=format&fit=crop&q=80&w=400",
-        badge: "Premium"
-    },
-    {
-        id: 2,
-        name: "Keter Shed - Darwin 4x6",
-        category: "keter",
-        price: 12500.00,
-        image: "https://images.unsplash.com/photo-1598501479159-8618034b7661?auto=format&fit=crop&q=80&w=400",
-        badge: "Más Vendido"
-    },
-    {
-        id: 3,
-        name: "IKEA Billy Bookcase - Blanco",
-        category: "ikea",
-        price: 1499.00,
-        image: "https://images.unsplash.com/photo-1594620302200-9a762244a156?auto=format&fit=crop&q=80&w=400",
-        badge: ""
-    },
-    {
-        id: 4,
-        name: "Maisto 1:18 Special Edition - Mustang",
-        category: "maisto",
-        price: 1200.00,
-        image: "https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&q=80&w=400",
-        badge: "Edición Especial"
-    },
-    {
-        id: 5,
-        name: "Keter Outdoor Storage Box",
-        category: "keter",
-        price: 3500.00,
-        image: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&q=80&w=400",
-        badge: ""
-    },
-    {
-        id: 6,
-        name: "Logikal Plus - Industrial Shelving",
-        category: "logikal",
-        price: 2800.00,
-        image: "https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&q=80&w=400",
-        badge: "Nuevo"
-    }
-];
-
 // Global state for products
 var allProducts = [];
 
@@ -95,12 +44,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch (error) {
             console.error('Error loading products:', error);
-            // Mock data fallback if needed
-            if (typeof products !== 'undefined') {
-                allProducts = products;
+            // Si hay un error, dejamos el catálogo vacío o mostramos un error en la UI
+            if (productContainer) {
+                productContainer.innerHTML = `<p class="text-center py-4">Error al conectar con la base de datos. Por favor intenta de nuevo.</p>`;
             }
-            if (productContainer) renderProducts(allProducts);
-            if (homeFeatured) renderFeatured(allProducts, homeFeatured);
         }
     }
 
