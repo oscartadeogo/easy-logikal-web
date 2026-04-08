@@ -1,12 +1,11 @@
-# Netlify Configuration for Easy Logikal
-[build]
-  publish = "."
+# GitHub Pages Configuration for Easy Logikal
+# (Este archivo no se usa en GitHub Pages, solo para referencia)
 
-# Redirections for Single Page App behavior if needed
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Para GitHub Pages, la carpeta raíz del proyecto se sirve como-está
+# No hay build ni configuración adicional necesaria
+
+# Los archivos HTML se sirven directamente desde el repositorio
+# URL base: https://oscartadeogo.github.io/easy-logikal-web/
 
 # Security Headers
 [[headers]]

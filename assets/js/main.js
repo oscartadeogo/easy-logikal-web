@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data, error } = await supabaseClient
                 .from('products')
                 .select('*')
-                .neq('status', 'deleted') // Cargar todos excepto eliminados
+                .eq('status', 'active') // Mostrar solo productos activos
                 .order('created_at', { ascending: false });
 
             if (error) throw error;

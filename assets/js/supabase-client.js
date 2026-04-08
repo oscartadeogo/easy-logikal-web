@@ -1,6 +1,6 @@
 /**
  * Easy Logikal Comercialización - Supabase Client Configuration
- * INTEGRACIÓN REAL CON NETLIFY
+ * INTEGRACIÓN REAL CON GITHUB PAGES
  */
 
 // Configuración real de Supabase para Easy Logikal
@@ -15,7 +15,7 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
  * Fetch all products from real database
  */
 async function fetchProducts() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
@@ -31,7 +31,7 @@ async function fetchProducts() {
  * Handle Admin Login with Supabase Auth
  */
 async function adminLogin(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
         email: email,
         password: password,
     });
@@ -44,7 +44,7 @@ async function adminLogin(email, password) {
  * Handle Admin Logout
  */
 async function adminLogout() {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabaseClient.auth.signOut();
     if (error) console.error('Error logging out:', error);
     window.location.href = 'index.html';
 }
@@ -53,7 +53,7 @@ async function adminLogout() {
  * Save new product to Supabase
  */
 async function saveProduct(product) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('products')
         .upsert(product)
         .select();
@@ -66,7 +66,7 @@ async function saveProduct(product) {
  * Delete product from Supabase
  */
 async function deleteProduct(productId) {
-    const { error } = await supabase
+    const { error } = await supabaseClient
         .from('products')
         .delete()
         .eq('id', productId);

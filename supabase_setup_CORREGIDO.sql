@@ -1,83 +1,8 @@
--- CONFIGURACIÓN DE BASE DE DATOS PARA EASY LOGIKAL COMERCIALIZACIÓN
--- Ejecuta este SQL en el Editor SQL de tu panel de Supabase
-
--- 1. Tabla de PRODUCTOS (con campos para catálogo pro)
-CREATE TABLE IF NOT EXISTS products (
-    id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    name TEXT NOT NULL,
-    description TEXT,
-    price DECIMAL(12,2) DEFAULT 0.00,
-    category TEXT DEFAULT 'general',
-    brand TEXT DEFAULT 'Premium',
-    sku TEXT UNIQUE,
-    stock INTEGER DEFAULT 0,
-    image TEXT, -- URL de imagen principal
-    gallery TEXT[], -- Array de URLs de imágenes secundarias
-    variants JSONB DEFAULT '[]', -- Variantes mejoradas: [{color: 'rojo', images: ['url1', 'url2'], price: 100, stock: 10}]
-    badge TEXT, -- 'Nuevo', 'Oferta', 'Más Vendido'
-    status TEXT DEFAULT 'active', -- 'active', 'paused', 'deleted'
-    shipping_info JSONB DEFAULT '{"free_shipping": false, "cost": 0}' -- Información de envío
-);
-
--- 2. Tabla de ENTRADAS DE BLOG (CMS)
-CREATE TABLE IF NOT EXISTS posts (
-    id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    title TEXT NOT NULL,
-    content TEXT NOT NULL, -- Soporta HTML
-    image TEXT, -- URL imagen destacada
-    category TEXT DEFAULT 'General',
-    status TEXT DEFAULT 'published', -- 'published' o 'draft'
-    author TEXT DEFAULT 'Admin Logikal'
-);
-
--- 3. Tabla de CONTACTOS (Leads)
-CREATE TABLE IF NOT EXISTS contacts (
-    id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    subject TEXT,
-    message TEXT,
-    status TEXT DEFAULT 'new' -- 'new', 'read', 'replied'
-);
-
--- 4. Tabla de PEDIDOS / COTIZACIONES
-CREATE TABLE IF NOT EXISTS orders (
-    id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    customer_name TEXT NOT NULL,
-    customer_email TEXT NOT NULL,
-    items JSONB NOT NULL, -- Lista de productos comprados
-    total DECIMAL(12,2) DEFAULT 0.00,
-    status TEXT DEFAULT 'pending', -- 'pending', 'processing', 'shipped', 'delivered'
-    payment_method TEXT DEFAULT 'card'
-);
-
--- 5. Tabla de MARKETING (Banners y Promociones)
-CREATE TABLE IF NOT EXISTS marketing (
-    id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    title TEXT,
-    subtitle TEXT,
-    image TEXT,
-    link TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    type TEXT DEFAULT 'banner' -- 'banner', 'coupon', 'popup'
-);
-
--- HABILITAR ROW LEVEL SECURITY (RLS) - LAS TABLAS REQUIEREN POLÍTICAS EXPLÍCITAS
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE marketing ENABLE ROW LEVEL SECURITY;
+-- SUPABASE SQL - CORRECCIONES PARA EASY LOGIKAL
+-- Ejecutar esto en el SQL Editor de Supabase para corregir la configuración
 
 -- 1. ELIMINAR POLÍTICAS ANTIGUAS INCOMPLETAS
 DROP POLICY IF EXISTS "Public read for products" ON products;
-DROP POLICY IF EXISTS "Public read for posts" ON posts;
-DROP POLICY IF EXISTS "Public read for marketing" ON marketing;
 DROP POLICY IF EXISTS "Public insert for contacts" ON contacts;
 DROP POLICY IF EXISTS "Public insert for orders" ON orders;
 
@@ -88,24 +13,31 @@ CREATE POLICY "Public read active products" ON products
     FOR SELECT 
     USING (status = 'active' OR auth.role() = 'authenticated');
 
+-- ✅ LECTURA: Search de productos activos
+CREATE POLICY "Public search products" ON products
+    FOR SELECT
+    USING (status = 'active');
+
 -- ✅ ESCRITURA: Admin puede crear productos
 CREATE POLICY "Admin insert products" ON products 
     FOR INSERT 
     WITH CHECK (auth.role() = 'authenticated');
 
 -- ✅ ACTUALIZACIÓN: Admin puede actualizar productos
-CREATE POLICY "Admin update products" ON products 
+CREATE POLICY "Admin update own products" ON products 
     FOR UPDATE 
     USING (auth.role() = 'authenticated')
     WITH CHECK (auth.role() = 'authenticated');
 
 -- ✅ ELIMINACIÓN: Admin puede cambiar status (soft delete)
-CREATE POLICY "Admin update product status" ON products
+CREATE POLICY "Admin soft delete products" ON products
     FOR UPDATE
     USING (auth.role() = 'authenticated' AND status != 'deleted')
     WITH CHECK (auth.role() = 'authenticated');
 
 -- 3. POLÍTICAS PARA POSTS (BLOG)
+
+DROP POLICY IF EXISTS "Public read for posts" ON posts;
 
 -- ✅ Lectura pública solo de posts publicados
 CREATE POLICY "Public read published posts" ON posts
@@ -113,7 +45,7 @@ CREATE POLICY "Public read published posts" ON posts
     USING (status = 'published');
 
 -- ✅ Admin puede crear/editar posts
-CREATE POLICY "Admin insert posts" ON posts
+CREATE POLICY "Admin manage posts" ON posts
     FOR INSERT
     WITH CHECK (auth.role() = 'authenticated');
 
@@ -124,13 +56,15 @@ CREATE POLICY "Admin update posts" ON posts
 
 -- 4. POLÍTICAS PARA MARKETING
 
+DROP POLICY IF EXISTS "Public read for marketing" ON marketing;
+
 -- ✅ Lectura pública de marketing activo
 CREATE POLICY "Public read active marketing" ON marketing
     FOR SELECT
     USING (is_active = true);
 
 -- ✅ Admin puede gestionar marketing
-CREATE POLICY "Admin insert marketing" ON marketing
+CREATE POLICY "Admin manage marketing" ON marketing
     FOR INSERT
     WITH CHECK (auth.role() = 'authenticated');
 
@@ -140,6 +74,8 @@ CREATE POLICY "Admin update marketing" ON marketing
     WITH CHECK (auth.role() = 'authenticated');
 
 -- 5. POLÍTICAS PARA CONTACTS
+
+DROP POLICY IF EXISTS "Public insert for contacts" ON contacts;
 
 -- ✅ Público puede crear contactos
 CREATE POLICY "Public create contacts" ON contacts
@@ -159,13 +95,20 @@ CREATE POLICY "Admin update contacts" ON contacts
 
 -- 6. POLÍTICAS PARA ORDERS
 
+DROP POLICY IF EXISTS "Public insert for orders" ON orders;
+
 -- ✅ Público puede crear órdenes
 CREATE POLICY "Public create orders" ON orders
     FOR INSERT
     WITH CHECK (true);
 
+-- ✅ Público puede ver órdenes (acceso limitado!)
+CREATE POLICY "Public read own orders" ON orders
+    FOR SELECT
+    USING (auth.role() = 'authenticated' OR customer_email = current_user_email());
+
 -- ✅ Admin puede ver todas las órdenes
-CREATE POLICY "Admin read orders" ON orders
+CREATE POLICY "Admin read all orders" ON orders
     FOR SELECT
     USING (auth.role() = 'authenticated');
 
@@ -182,13 +125,44 @@ CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_products_price ON products(price);
 CREATE INDEX IF NOT EXISTS idx_products_stock ON products(stock);
+CREATE INDEX IF NOT EXISTS idx_products_status_active ON products(status) WHERE status = 'active';
 
 CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_contacts_status ON contacts(status);
 CREATE INDEX IF NOT EXISTS idx_contacts_created_at ON contacts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email);
 
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_customer_email ON orders(customer_email);
+
+CREATE INDEX IF NOT EXISTS idx_marketing_active ON marketing(is_active);
+
+-- 8. VERIFICAR QUE HAY PRODUCTOS ACTIVOS EN LA BD
+
+SELECT COUNT(*) as productos_activos FROM products WHERE status = 'active';
+SELECT COUNT(*) as productos_totales FROM products;
+SELECT COUNT(*) as productos_pausados FROM products WHERE status = 'paused';
+SELECT COUNT(*) as productos_eliminados FROM products WHERE status = 'deleted';
+
+-- 9. LISTAR PRIMEROS 5 PRODUCTOS ACTIVOS
+
+SELECT id, name, price, category, status FROM products 
+WHERE status = 'active' 
+ORDER BY created_at DESC 
+LIMIT 5;
+
+-- 10. VERIFICAR POLÍTICAS CREADAS
+
+SELECT 
+    tablename,
+    policyname,
+    permissive,
+    roles,
+    qual,
+    with_check
+FROM pg_policies
+WHERE tablename IN ('products', 'posts', 'contacts', 'orders', 'marketing')
+ORDER BY tablename, policyname;
