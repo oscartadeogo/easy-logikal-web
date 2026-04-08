@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data, error } = await supabaseClient
                 .from('products')
                 .select('*')
-                .eq('status', 'active') // Mostrar solo productos activos
+                .neq('status', 'deleted') // Cargar todos menos eliminados
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { data, error } = await supabaseClient
                 .from('products')
                 .select('*')
-                .eq('status', 'active')
+                .neq('status', 'deleted')
                 .limit(4); // Load first 4 for home
 
             if (error) throw error;
