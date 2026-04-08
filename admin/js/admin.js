@@ -422,6 +422,42 @@ window.toggleCustomCategory = () => {
     }
 };
 
+// --- POPULATE DYNAMIC CATEGORIES ---
+window.populateCategoryOptions = () => {
+    const select = document.getElementById('p-category');
+    if (!select) return;
+
+    // Get unique categories from products
+    const categories = [...new Set(
+        (window.easyLogikal?.allProducts || [])
+            .map(p => p.category)
+            .filter(c => c && c.trim() !== '')
+            .sort()
+    )];
+
+    // Keep first option (placeholder)
+    const firstOption = select.options[0];
+    
+    // Remove all other options except first
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+
+    // Add categories
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        select.appendChild(option);
+    });
+
+    // Add "Otro" option at the end
+    const otroOption = document.createElement('option');
+    otroOption.value = 'otro';
+    otroOption.textContent = 'Otro (Escribir debajo)';
+    select.appendChild(otroOption);
+};
+
 // --- DRAG AND DROP ---
 function setupDropzone(id, onFile) {
     const zone = document.getElementById(id);
@@ -745,6 +781,8 @@ function switchModalTab(tabId) {
 function openModal() {
     const modal = document.getElementById('product-modal');
     if (modal) modal.style.display = 'flex';
+    // Populate categories dynamically
+    window.populateCategoryOptions();
 }
 
 function closeModal() {
@@ -787,7 +825,7 @@ function setupProductEventListeners() {
             
             // Reset category
             const categorySelect = document.getElementById('p-category');
-            if (categorySelect) categorySelect.value = 'juguetes';
+            if (categorySelect) categorySelect.value = '';
             
             const categoryCustom = document.getElementById('p-category-custom');
             if (categoryCustom) {
@@ -903,12 +941,15 @@ window.editProduct = (id) => {
     // Category logic
     const categorySelect = document.getElementById('p-category');
     const categoryCustom = document.getElementById('p-category-custom');
-    const standardCategories = ['juguetes', 'muebles', 'hogar', 'logistica'];
     
-    if (standardCategories.includes(p.category)) {
+    // Check if category exists in the dropdown options
+    const optionExists = Array.from(categorySelect.options).some(opt => opt.value === p.category);
+    
+    if (optionExists) {
         categorySelect.value = p.category;
         categoryCustom.style.display = 'none';
     } else {
+        // If category doesn't exist in options, treat it as "otro"
         categorySelect.value = 'otro';
         categoryCustom.value = p.category;
         categoryCustom.style.display = 'block';
