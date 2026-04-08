@@ -178,7 +178,10 @@ function renderProducts(productsToRender) {
     }
     
     const html = productsToRender.map(product => createProductCard(product, 'catalog')).join('');
+    console.log(`📝 Renderizando ${productsToRender.length} productos...`);
+    console.log('🔍 Primer producto HTML:', html.substring(0, 200));
     container.innerHTML = html;
+    console.log(`✅ ${productsToRender.length} tarjetas insertas en el DOM`);
     
     // GSAP animations
     if (window.gsap) {
@@ -206,17 +209,20 @@ function renderProducts(productsToRender) {
 function createProductCard(product, context = 'catalog') {
     const imageUrl = product.image || 'https://via.placeholder.com/400';
     const price = parseFloat(product.price || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 });
-    const pathPrefix = context === 'featured' ? './' : './';
+    
+    // Detectar si estamos en /pages/ o en raíz
+    const isInPages = window.location.pathname.includes('/pages/');
+    const productLink = isInPages ? `producto.html?id=${product.id}` : `pages/producto.html?id=${product.id}`;
     
     return `
         <div class="product-card" data-reveal="up" style="cursor: pointer;">
-            <div class="product-image" onclick="window.location.href='${pathPrefix}pages/producto.html?id=${product.id}'">
+            <div class="product-image" onclick="window.location.href='${productLink}'">
                 <img src="${imageUrl}" alt="${product.name}" loading="lazy">
                 ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
             </div>
             <div class="product-info">
                 <span class="product-category">${product.category || 'General'}</span>
-                <h3 class="product-title" onclick="window.location.href='${pathPrefix}pages/producto.html?id=${product.id}'">${product.name}</h3>
+                <h3 class="product-title" onclick="window.location.href='${productLink}'">${product.name}</h3>
                 ${product.badge ? `<div class="badge-info">${product.badge}</div>` : ''}
                 <div class="product-meta-small">
                     ${product.sku ? `<span class="sku">SKU: ${product.sku}</span>` : ''}
@@ -228,7 +234,7 @@ function createProductCard(product, context = 'catalog') {
             </div>
             <div class="product-actions">
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                    <button class="btn btn-primary btn-sm" onclick="window.location.href='${pathPrefix}pages/producto.html?id=${product.id}'; event.stopPropagation();">
+                    <button class="btn btn-primary btn-sm" onclick="window.location.href='${productLink}'; event.stopPropagation();">
                         Ver Detalle
                     </button>
                     <button class="btn btn-outline btn-sm" onclick="addToCart(${product.id}); event.stopPropagation();">
