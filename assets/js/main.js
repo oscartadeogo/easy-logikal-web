@@ -207,7 +207,12 @@ function renderProducts(productsToRender) {
 }
 
 function createProductCard(product, context = 'catalog') {
-    const imageUrl = product.image || 'https://via.placeholder.com/400';
+    // Validar URL de imagen
+    let imageUrl = product.image || '';
+    if (!imageUrl || imageUrl.trim() === '' || imageUrl === 'data') {
+        imageUrl = 'https://via.placeholder.com/400?text=' + encodeURIComponent(product.name);
+    }
+    
     const price = parseFloat(product.price || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 });
     
     // Detectar si estamos en /pages/ o en raíz
@@ -215,14 +220,14 @@ function createProductCard(product, context = 'catalog') {
     const productLink = isInPages ? `producto.html?id=${product.id}` : `pages/producto.html?id=${product.id}`;
     
     return `
-        <div class="product-card" data-reveal="up" style="cursor: pointer;">
-            <div class="product-image" onclick="window.location.href='${productLink}'">
-                <img src="${imageUrl}" alt="${product.name}" loading="lazy">
+        <div class="product-card" data-reveal="up" style="cursor: pointer; display: block;">
+            <div class="product-image" onclick="window.location.href='${productLink}'" style="display: block;">
+                <img src="${imageUrl}" alt="${product.name}" loading="lazy" style="display: block; width: 100%; height: auto;">
                 ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
             </div>
-            <div class="product-info">
+            <div class="product-info" style="display: block;">
                 <span class="product-category">${product.category || 'General'}</span>
-                <h3 class="product-title" onclick="window.location.href='${productLink}'">${product.name}</h3>
+                <h3 class="product-title" onclick="window.location.href='${productLink}'" style="cursor: pointer;">${product.name}</h3>
                 ${product.badge ? `<div class="badge-info">${product.badge}</div>` : ''}
                 <div class="product-meta-small">
                     ${product.sku ? `<span class="sku">SKU: ${product.sku}</span>` : ''}
@@ -230,14 +235,14 @@ function createProductCard(product, context = 'catalog') {
                         ${(product.stock || 0) > 0 ? 'En Stock' : 'Agotado'}
                     </span>
                 </div>
-                <p class="product-price">$${price}</p>
+                <p class="product-price" style="font-size: 1.25rem; font-weight: bold; color: var(--primary, #007bff);">$${price}</p>
             </div>
-            <div class="product-actions">
+            <div class="product-actions" style="display: block; padding: 10px;">
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                     <button class="btn btn-primary btn-sm" onclick="window.location.href='${productLink}'; event.stopPropagation();">
                         Ver Detalle
                     </button>
-                    <button class="btn btn-outline btn-sm" onclick="addToCart(${product.id}); event.stopPropagation();">
+                    <button class="btn btn-outline btn-sm" onclick="addToCart(${product.id}); event.stopPropagation(); return false;">
                         Añadir al Carrito
                     </button>
                 </div>
