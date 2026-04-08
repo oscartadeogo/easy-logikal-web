@@ -77,6 +77,9 @@ async function loadAllProducts() {
         console.log(`✅ ${data.length} productos cargados`);
         window.easyLogikal.allProducts = data || [];
         
+        // Actualizar categorías dinámicas
+        updateDynamicCategories();
+        
         // Renderizar en catálogo si existe
         if (container) {
             applyAllFilters();
@@ -273,7 +276,51 @@ function initializeFiltersUI() {
     const container = document.getElementById('category-filters');
     if (!container) return;
     
-    updateCategoryCounts();
+    // Extraer categorías dinámicamente y actualizar conteos
+    updateDynamicCategories();
+}
+
+function updateDynamicCategories() {
+    const container = document.getElementById('category-filters');
+    if (!container || !window.easyLogikal.allProducts) return;
+    
+    // Obtener todas las categorías únicas de los productos
+    const categories = [...new Set(
+        (window.easyLogikal.allProducts || [])
+            .map(p => p.category)
+            .filter(c => c && c.trim() !== '')
+            .sort()
+    )];
+    
+    console.log('📂 Categorías dinámicas encontradas:', categories);
+    
+    // Contar productos por categoría
+    const counts = { all: window.easyLogikal.allProducts.length };
+    window.easyLogikal.allProducts.forEach(p => {
+        const cat = p.category || 'Sin categoría';
+        counts[cat] = (counts[cat] || 0) + 1;
+    });
+    
+    // Generar HTML dinámicamente
+    let html = `<li><button class="filter-btn active" data-category="all">Todos los productos <span class="count">(${counts.all})</span></button></li>`;
+    
+    categories.forEach(cat => {
+        html += `<li><button class="filter-btn" data-category="${cat}">${cat} <span class="count">(${counts[cat] || 0})</span></button></li>`;
+    });
+    
+    container.innerHTML = html;
+    
+    // Re-vincular eventos
+    container.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyAllFilters();
+            e.preventDefault();
+        });
+    });
+    
+    console.log('✅ Categorías dinámicas actualizadas');
 }
 
 function applyAllFilters() {
@@ -348,19 +395,8 @@ function getSortBy() {
 }
 
 function updateCategoryCounts() {
-    const counts = { all: window.easyLogikal.allProducts.length };
-    
-    (window.easyLogikal.allProducts || []).forEach(p => {
-        counts[p.category] = (counts[p.category] || 0) + 1;
-    });
-    
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        const cat = btn.getAttribute('data-category');
-        const countSpan = btn.querySelector('.count');
-        if (countSpan) {
-            countSpan.textContent = `(${counts[cat] || 0})`;
-        }
-    });
+    // Usar la función dinámica de categorías
+    updateDynamicCategories();
 }
 
 // ============================================================================
@@ -513,7 +549,10 @@ function setupRealtimeSubscription() {
                 { event: '*', schema: 'public', table: 'products' },
                 (payload) => {
                     console.log('🔔 Cambio detectado en productos:', payload);
-                    loadAllProducts();
+                    loadAllProducts().then(() => {
+                        // Actualizar categorías dinámicamente
+                        updateDynamicCategories();
+                    });
                 }
             )
             .subscribe((status) => {
