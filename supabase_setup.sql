@@ -83,10 +83,10 @@ DROP POLICY IF EXISTS "Public insert for orders" ON orders;
 
 -- 2. POLÍTICAS MEJORADAS PARA PRODUCTS
 
--- ✅ LECTURA: Público solo ve productos ACTIVOS
-CREATE POLICY "Public read active products" ON products 
+-- ✅ LECTURA: Público puede ver TODOS los productos excepto eliminados
+CREATE POLICY "Public read products" ON products 
     FOR SELECT 
-    USING (status = 'active' OR auth.role() = 'authenticated');
+    USING (status IS NULL OR status != 'deleted');
 
 -- ✅ ESCRITURA: Admin puede crear productos
 CREATE POLICY "Admin insert products" ON products 
@@ -107,10 +107,10 @@ CREATE POLICY "Admin update product status" ON products
 
 -- 3. POLÍTICAS PARA POSTS (BLOG)
 
--- ✅ Lectura pública solo de posts publicados
-CREATE POLICY "Public read published posts" ON posts
+-- ✅ Lectura pública a todos los posts
+CREATE POLICY "Public read posts" ON posts
     FOR SELECT
-    USING (status = 'published');
+    USING (status IS NULL OR status != 'draft');
 
 -- ✅ Admin puede crear/editar posts
 CREATE POLICY "Admin insert posts" ON posts
@@ -124,10 +124,10 @@ CREATE POLICY "Admin update posts" ON posts
 
 -- 4. POLÍTICAS PARA MARKETING
 
--- ✅ Lectura pública de marketing activo
-CREATE POLICY "Public read active marketing" ON marketing
+-- ✅ Lectura pública a marketing
+CREATE POLICY "Public read marketing" ON marketing
     FOR SELECT
-    USING (is_active = true);
+    USING (true);
 
 -- ✅ Admin puede gestionar marketing
 CREATE POLICY "Admin insert marketing" ON marketing
@@ -146,17 +146,6 @@ CREATE POLICY "Public create contacts" ON contacts
     FOR INSERT
     WITH CHECK (true);
 
--- ✅ Admin puede ver todos los contactos
-CREATE POLICY "Admin read contacts" ON contacts
-    FOR SELECT
-    USING (auth.role() = 'authenticated');
-
--- ✅ Admin puede actualizar estado de contactos
-CREATE POLICY "Admin update contacts" ON contacts
-    FOR UPDATE
-    USING (auth.role() = 'authenticated')
-    WITH CHECK (auth.role() = 'authenticated');
-
 -- 6. POLÍTICAS PARA ORDERS
 
 -- ✅ Público puede crear órdenes
@@ -173,18 +162,7 @@ CREATE POLICY "Admin read orders" ON orders
 CREATE POLICY "Admin update orders" ON orders
     FOR UPDATE
     USING (auth.role() = 'authenticated')
-    WITH CHECK (auth.role() = 'authenticated');
-
--- 7. CREAR ÍNDICES PARA PERFORMANCE
-
-CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
-CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
-CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_products_price ON products(price);
-CREATE INDEX IF NOT EXISTS idx_products_stock ON products(stock);
-
-CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
-CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
+    WITH CHECK (auth.r ON posts(created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_contacts_status ON contacts(status);
 CREATE INDEX IF NOT EXISTS idx_contacts_created_at ON contacts(created_at DESC);
