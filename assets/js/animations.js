@@ -83,8 +83,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     x: 0,
                     stagger: 0.1,
                     duration: 0.8,
-                    onStart: () => batch.forEach(el => el.classList.add('active')),
-                    clearProps: "transform" // Keep GPU layer clean after animation
+                    ease: "power2.out",
+                    onStart: () => {
+                        batch.forEach(el => el.classList.add('active'));
+                    },
+                    // Remove clearProps to avoid sudden reset jumps
+                    overwrite: true
                 });
             },
             start: "top 90%",
