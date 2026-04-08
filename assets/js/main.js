@@ -54,14 +54,14 @@ const products = [
     }
 ];
 
+// Global state for cart and products
+window.allProducts = [];
+
 document.addEventListener('DOMContentLoaded', async () => {
     const productContainer = document.getElementById('product-container');
     const categoryFilters = document.querySelectorAll('.filter-btn');
     const searchInput = document.getElementById('product-search');
 
-    // Cargar productos desde Supabase
-    let allProducts = [];
-    
     async function loadProducts() {
         if (!productContainer && !document.getElementById('home-featured-products')) return;
         
@@ -74,18 +74,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (error) throw error;
             
-            allProducts = data;
+            window.allProducts = data;
             
             // Actualizar categorías dinámicamente si estamos en la página de productos
             if (document.getElementById('category-filters')) {
                 renderDynamicCategories();
             }
 
-            if (productContainer) renderProducts(allProducts);
-            if (document.getElementById('home-featured-products')) loadHomeFeatured();
-
+            if (productContainer) renderProducts(window.allProducts);
+            if (document.getElementById('home-featured-products')) {
+                renderFeatured(window.allProducts);
+            }
         } catch (error) {
-            console.error('Error cargando productos:', error);
+            console.error('Error loading products:', error);
+            // Mock data fallback if needed
+            if (typeof products !== 'undefined') {
+                window.allProducts = products;
+            }
+            if (productContainer) renderProducts(window.allProducts);
+            if (document.getElementById('home-featured-products')) {
+                renderFeatured(window.allProducts);
+            }
         }
     }
 
