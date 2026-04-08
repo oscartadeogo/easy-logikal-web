@@ -444,6 +444,7 @@
                 <div class="product-tabs-container mt-4">
                     <div class="tab-header">
                         <div class="tab-link active" onclick="switchTab(event, 'specs')">Especificaciones Técnicas</div>
+                        <div class="tab-link" onclick="switchTab(event, 'details')">Detalles y Materiales</div>
                         <div class="tab-link" onclick="switchTab(event, 'shipping')">Logística y Envío</div>
                     </div>
                     <div class="tab-content" id="tab-specs">
@@ -452,8 +453,23 @@
                             <tr><td>SKU</td><td>${p.sku || 'N/A'}</td></tr>
                             <tr><td>Categoría</td><td>${p.category}</td></tr>
                             <tr><td>Origen</td><td>Importación Directa</td></tr>
-                            <tr><td>Disponibilidad</td><td>Inmediata</td></tr>
+                            ${p.specifications ? `<tr><td>Especificaciones</td><td>${p.specifications}</td></tr>` : ''}
                         </table>
+                    </div>
+                    <div class="tab-content" id="tab-details" style="display: none;">
+                        ${p.materials ? `
+                            <div class="mb-2">
+                                <strong>Materiales:</strong>
+                                <p>${p.materials}</p>
+                            </div>
+                        ` : ''}
+                        ${p.technical_details ? `
+                            <div>
+                                <strong>Detalles Técnicos:</strong>
+                                <p>${p.technical_details}</p>
+                            </div>
+                        ` : ''}
+                        ${!p.materials && !p.technical_details ? '<p class="text-muted">No hay detalles adicionales disponibles.</p>' : ''}
                     </div>
                     <div class="tab-content" id="tab-shipping" style="display: none;">
                         <p>Nuestra red logística cubre todo el territorio nacional. Tiempos estimados:</p>

@@ -845,6 +845,9 @@ function setupProductEventListeners() {
                 sku: document.getElementById('p-sku').value,
                 brand: document.getElementById('p-brand').value,
                 description: document.getElementById('p-desc').value,
+                specifications: document.getElementById('p-specs').value,
+                materials: document.getElementById('p-materials').value,
+                technical_details: document.getElementById('p-tech').value,
                 status: document.getElementById('p-status') ? document.getElementById('p-status').value : 'active',
                 badge: document.getElementById('p-badge').value,
                 tags: document.getElementById('p-tags').value.split(',').map(t => t.trim()).filter(t => t !== ''),
@@ -918,6 +921,9 @@ window.editProduct = (id) => {
     document.getElementById('p-brand').value = p.brand || '';
     document.getElementById('p-stock').value = p.stock || 0;
     document.getElementById('p-desc').value = p.description || '';
+    document.getElementById('p-specs').value = p.specifications || '';
+    document.getElementById('p-materials').value = p.materials || '';
+    document.getElementById('p-tech').value = p.technical_details || '';
     
     if (document.getElementById('p-status')) {
         document.getElementById('p-status').value = p.status || 'active';
