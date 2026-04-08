@@ -1777,38 +1777,135 @@ img {
 }
 
 /* Cart Drawer */
+/* Compact Cart Redesign */
 .cart-drawer {
     position: fixed;
     top: 0;
     right: -100%;
     width: 100%;
-    max-width: 800px;
+    max-width: 450px; /* More compact width */
     height: 100%;
     background-color: var(--bg-main);
     z-index: 2000;
-    box-shadow: -10px 0 30px rgba(0,0,0,0.1);
-    transition: var(--transition-base);
+    box-shadow: -5px 0 20px rgba(0,0,0,0.05);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
 }
 
 .cart-drawer.open {
-    right: 0;
+    transform: translate3d(-100%, 0, 0);
 }
 
-.cart-table-container {
-    overflow-x: auto;
+.compact-cart-item {
+    display: grid;
+    grid-template-columns: 50px 1fr 30px;
+    gap: 1rem;
     padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
 }
 
-@media (max-width: 768px) {
+.compact-cart-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    background: #f9f9f9;
+    border-radius: 6px;
+}
+
+.compact-cart-info h4 {
+    font-size: 0.85rem;
+    margin-bottom: 0.2rem;
+    line-height: 1.2;
+    color: var(--secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.compact-cart-info p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.compact-cart-subtotal {
+    padding: 1.5rem;
+    background: #fff;
+    border-top: 1px solid var(--border);
+}
+
+.compact-cart-subtotal h3 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+/* Empty Cart - Mercado Libre Style */
+.empty-cart-meli {
+    padding: 3rem 2rem;
+    text-align: center;
+    background: #fff;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.empty-cart-icon {
+    width: 120px;
+    height: 120px;
+    background: #f5f5f5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    color: #ccc;
+}
+
+.empty-cart-meli h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.empty-cart-meli p {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    max-width: 250px;
+}
+
+.meli-summary-box {
+    width: 100%;
+    background: #f5f5f5;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+    text-align: left;
+}
+
+.meli-summary-box h4 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.meli-summary-box p {
+    font-size: 0.85rem;
+    color: #999;
+    margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
     .cart-drawer {
         max-width: 100%;
-    }
-    .cart-table th:nth-child(1), .cart-table td:nth-child(1),
-    .cart-table th:nth-child(2), .cart-table td:nth-child(2),
-    .cart-table th:nth-child(6), .cart-table td:nth-child(6) {
-        display: none;
     }
 }
 

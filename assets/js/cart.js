@@ -54,13 +54,7 @@ function injectCartDrawer() {
             
             <div id="cart-view-container" class="cart-view-active">
                 <div class="cart-items" id="cart-items">
-                    <p class="empty-cart-msg">Tu carrito está vacío.</p>
-                </div>
-                <div class="cart-footer">
-                    <div class="cart-actions-main">
-                        <button class="btn btn-outline w-100 mb-1" id="view-cart-btn">VER CARRITO</button>
-                        <button class="btn btn-primary w-100" id="checkout-view-btn">FINALIZAR COMPRA</button>
-                    </div>
+                    <!-- Dynamic content -->
                 </div>
             </div>
 
@@ -214,10 +208,6 @@ function injectCartDrawer() {
         <div class="cart-overlay" id="cart-overlay"></div>
     `;
     document.body.insertAdjacentHTML('beforeend', drawerHTML);
-
-    // Event Listeners for new buttons
-    document.getElementById('checkout-view-btn').addEventListener('click', showCheckoutView);
-    document.getElementById('view-cart-btn').addEventListener('click', showFullCartView);
 }
 
 function showCartView() {
@@ -356,73 +346,66 @@ function updateCartUI() {
     const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
     cartCountElements.forEach(el => el.textContent = totalItems);
 
-    // Update List
+    // Empty Cart State - Mercado Libre Style
     if (cart.length === 0) {
-        cartItemsContainer.innerHTML = '<p class="empty-cart-msg">Tu carrito está vacío.</p>';
+        cartItemsContainer.innerHTML = `
+            <div class="empty-cart-meli">
+                <div class="empty-cart-icon">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                </div>
+                <h2>Tu carrito está vacío</h2>
+                <p>Agrega productos del mismo vendedor y consigue envío gratis.</p>
+                <button class="btn btn-primary" onclick="closeCart(); window.location.href='pages/productos.html'">Descubrir productos</button>
+                
+                <div class="meli-summary-box">
+                    <h4>Resumen de compra</h4>
+                    <p>Aquí verás los importes de tu compra una vez que agregues productos.</p>
+                </div>
+                
+                <div class="mt-4 text-left w-100">
+                    <h4 style="font-size: 1rem; color: #333; margin-bottom: 1rem;">Recomendaciones para ti</h4>
+                    <p style="font-size: 0.8rem; color: #999;">Explora nuestras líneas de productos destacadas.</p>
+                </div>
+            </div>
+        `;
+        // Hide subtotal footer if empty
+        const footer = document.querySelector('.cart-footer');
+        if (footer) footer.style.display = 'none';
         return;
     }
 
+    // Show subtotal footer if not empty
+    const footer = document.querySelector('.cart-footer');
+    if (footer) footer.style.display = 'block';
+
     let subtotal = 0;
     cartItemsContainer.innerHTML = `
-        <div class="cart-table-container">
-            <table class="cart-table">
-                <thead>
-                    <tr>
-                        <th>Eliminar</th>
-                        <th>Imagen</th>
-                        <th>Producto</th>
-                        <th>Precio</th>
-                        <th>Cantidad</th>
-                        <th>Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${cart.map(item => {
-                        const itemTotal = item.price * item.quantity;
-                        subtotal += itemTotal;
-                        return `
-                            <tr>
-                                <td><button class="cart-item-remove" onclick="removeFromCart(${item.id})">×</button></td>
-                                <td><img src="${item.image || 'https://via.placeholder.com/80'}" class="cart-thumb" alt="${item.name}"></td>
-                                <td style="font-weight: 600;">${item.name}</td>
-                                <td>$${parseFloat(item.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-                                <td>
-                                    <div class="qty-controls" style="display: flex; border: 1px solid var(--border); border-radius: 4px; max-width: 100px;">
-                                        <button onclick="updateQuantity(${item.id}, -1)" style="padding: 5px 10px; border:none; background:none; cursor:pointer;">-</button>
-                                        <span style="flex:1; text-align:center; padding: 5px 0;">${item.quantity}</span>
-                                        <button onclick="updateQuantity(${item.id}, 1)" style="padding: 5px 10px; border:none; background:none; cursor:pointer;">+</button>
-                                    </div>
-                                </td>
-                                <td style="font-weight: 700;">$${itemTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
+        <div class="compact-cart-list">
+            ${cart.map(item => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+                return `
+                    <div class="compact-cart-item">
+                        <img src="${item.image || 'https://via.placeholder.com/50'}" class="compact-cart-thumb" alt="${item.name}">
+                        <div class="compact-cart-info">
+                            <h4>${item.name}</h4>
+                            <p>${item.quantity} × $${parseFloat(item.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
+                        </div>
+                        <button class="cart-item-remove" style="font-size: 1.2rem;" onclick="removeFromCart(${item.id})">×</button>
+                    </div>
+                `;
+            }).join('')}
         </div>
         
-        <div class="cart-totals-section" style="max-width: 400px; margin-left: auto; background: #f9f9f9; padding: 2rem; border-radius: 12px;">
-            <h3 style="margin-bottom: 1.5rem; border-bottom: 2px solid var(--primary); display: inline-block;">Total del carrito</h3>
-            <div class="summary-row">
-                <span>Subtotal</span>
+        <div class="compact-cart-subtotal">
+            <h3>
+                <span>SUBTOTAL:</span>
                 <span>$${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+            </h3>
+            <div class="cart-actions-main">
+                <button class="btn btn-outline w-100 mb-1" id="view-cart-btn" onclick="showFullCartView()">VER CARRITO</button>
+                <button class="btn btn-primary w-100" id="checkout-view-btn" onclick="showCheckoutView()">FINALIZAR COMPRA</button>
             </div>
-            <div class="summary-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
-                <div style="width: 100%; display: flex; justify-content: space-between;">
-                    <span>Envío</span>
-                    <span>${(subtotal >= 499 || totalItems >= 2) ? 'GRATIS' : '$100.00'}</span>
-                </div>
-                <p style="font-size: 0.8rem; color: var(--text-muted);">
-                    ${(subtotal >= 499 || totalItems >= 2) ? 'Envío Gratuito En 2 Productos O Más' : 'Envío Estándar: $100.00'}
-                </p>
-                <p style="font-size: 0.85rem;">Enviar a <strong>Estado de México</strong>.</p>
-                <button class="btn btn-sm btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Cambiar dirección</button>
-            </div>
-            <div class="summary-row total">
-                <span>Total</span>
-                <span>$${(subtotal + ((subtotal >= 499 || totalItems >= 2) ? 0 : 100)).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-            </div>
-            <button class="btn btn-primary w-100 mt-1" onclick="showCheckoutView()">CONTINUAR</button>
         </div>
     `;
 }
