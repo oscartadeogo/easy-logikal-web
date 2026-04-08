@@ -121,12 +121,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         container.innerHTML = items.map(product => `
             <div class="product-card" data-reveal="up" onclick="window.location.href='pages/producto.html?id=${product.id}'" style="cursor: pointer;">
                 <div class="product-image">
-                    ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
                     <img src="${product.image || 'https://via.placeholder.com/400'}" alt="${product.name}">
                 </div>
                 <div class="product-info">
                     <span class="product-category">${product.category}</span>
                     <h3 class="product-title">${product.name}</h3>
+                    ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
                     <p class="product-price">$${parseFloat(product.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <div class="product-actions" onclick="event.stopPropagation()">
@@ -399,12 +399,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         productContainer.innerHTML = productsToRender.map(product => `
             <div class="product-card" data-reveal="up" onclick="window.location.href='producto.html?id=${product.id}'" style="cursor: pointer;">
                 <div class="product-image">
-                    ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
                     <img src="${product.image || 'https://via.placeholder.com/400'}" alt="${product.name}">
                 </div>
                 <div class="product-info">
                     <span class="product-category">${product.category}</span>
                     <h3 class="product-title">${product.name}</h3>
+                    ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
                     <div class="product-meta-small">
                         <span class="sku">SKU: ${product.sku || 'N/A'}</span>
                         <span class="stock-status ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}">
