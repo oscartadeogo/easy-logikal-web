@@ -12,6 +12,63 @@ try {
     cart = [];
 }
 
+// --- DETAIL PAGE FUNCTIONS (Must be defined BEFORE DOMContentLoaded) ---
+window.updateDetailQty = (delta) => {
+    const input = document.getElementById('detail-qty');
+    if (!input) return;
+    
+    let currentQty = parseInt(input.value) || 1;
+    const newQty = currentQty + delta;
+    
+    if (newQty >= 1) {
+        input.value = newQty;
+    }
+};
+
+window.addToCartWithQty = (productId) => {
+    console.log(`🛒 Agregando ${document.getElementById('detail-qty')?.value || 1} unidades del producto ${productId}...`);
+    
+    // Verificar que los productos estén cargados
+    if (!window.easyLogikal?.initialized || !window.easyLogikal?.allProducts) {
+        alert('Los productos aún se están cargando. Por favor espera...');
+        console.warn('❌ Productos no disponibles aún');
+        return;
+    }
+    
+    // Get product
+    const product = window.easyLogikal.allProducts.find(p => p.id === productId);
+    if (!product) {
+        console.error(`❌ Producto ${productId} no encontrado`);
+        alert('Producto no encontrado');
+        return;
+    }
+
+    // Get quantity from input
+    const qtyInput = document.getElementById('detail-qty');
+    const quantity = Math.max(1, parseInt(qtyInput?.value) || 1);
+
+    console.log(`✅ Añadiendo ${quantity} × ${product.name}`);
+
+    // Add to cart with quantity
+    let existingItem = cart.find(item => item.id === productId);
+
+    if (existingItem) {
+        existingItem.quantity += quantity;
+        console.log(`📦 Incrementando a ${existingItem.quantity} unidades`);
+    } else {
+        cart.push({
+            ...product,
+            quantity: quantity
+        });
+        console.log(`🆕 ${quantity} unidades agregadas`);
+    }
+
+    saveCart();
+    updateCartUI();
+    openCart();
+    alert(`✅ ${quantity}× ${product.name} agregado al carrito`);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Inject Cart Drawer if not exists
     injectCartDrawer();
@@ -389,63 +446,6 @@ function updateQuantity(productId, delta) {
         }
     }
 }
-
-// --- DETAIL PAGE FUNCTIONS ---
-window.updateDetailQty = (delta) => {
-    const input = document.getElementById('detail-qty');
-    if (!input) return;
-    
-    let currentQty = parseInt(input.value) || 1;
-    const newQty = currentQty + delta;
-    
-    if (newQty >= 1) {
-        input.value = newQty;
-    }
-};
-
-window.addToCartWithQty = (productId) => {
-    console.log(`🛒 Agregando ${document.getElementById('detail-qty')?.value || 1} unidades del producto ${productId}...`);
-    
-    // Verificar que los productos estén cargados
-    if (!window.easyLogikal?.initialized || !window.easyLogikal?.allProducts) {
-        alert('Los productos aún se están cargando. Por favor espera...');
-        console.warn('❌ Productos no disponibles aún');
-        return;
-    }
-    
-    // Get product
-    const product = window.easyLogikal.allProducts.find(p => p.id === productId);
-    if (!product) {
-        console.error(`❌ Producto ${productId} no encontrado`);
-        alert('Producto no encontrado');
-        return;
-    }
-
-    // Get quantity from input
-    const qtyInput = document.getElementById('detail-qty');
-    const quantity = Math.max(1, parseInt(qtyInput?.value) || 1);
-
-    console.log(`✅ Añadiendo ${quantity} × ${product.name}`);
-
-    // Add to cart with quantity
-    let existingItem = cart.find(item => item.id === productId);
-
-    if (existingItem) {
-        existingItem.quantity += quantity;
-        console.log(`📦 Incrementando a ${existingItem.quantity} unidades`);
-    } else {
-        cart.push({
-            ...product,
-            quantity: quantity
-        });
-        console.log(`🆕 ${quantity} unidades agregadas`);
-    }
-
-    saveCart();
-    updateCartUI();
-    openCart();
-    alert(`✅ ${quantity}× ${product.name} agregado al carrito`);
-};
 
 function saveCart() {
     localStorage.setItem('easy_logikal_cart', JSON.stringify(cart));
