@@ -1,68 +1,304 @@
 /**
  * Easy Logikal Comercialización - Cart JS
  * Managing the shopping cart and checkout process
- * IMPORTANT: Functions must be in correct order - helpers before they're used
  */
 
 let cart = [];
 try {
-    cart = cleanOldCart();
+    const savedCart = localStorage.getItem('easy_logikal_cart');
+    cart = savedCart ? JSON.parse(savedCart) : [];
 } catch (e) {
-    console.warn('Error loading cart:', e);
+    console.warn('Error loading cart from localStorage:', e);
     cart = [];
 }
 
-// ============================================================================
-// HELPER FUNCTIONS (MUST BE FIRST)
-// ============================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Inject Cart Drawer if not exists
+    injectCartDrawer();
 
-// Limpiar localStorage antiguo al cargar
-function cleanOldCart() {
-    try {
-        const saved = localStorage.getItem('easy_logikal_cart');
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            // Si hay datos antiguos muy grandes, limpiar
-            if (saved.length > 1000000) {
-                console.log('🧹 Limpiando localStorage antiguo (demasiado grande)');
-                localStorage.removeItem('easy_logikal_cart');
-                return [];
-            }
-            return parsed;
-        }
-    } catch (e) {
-        console.warn('Error limpiando localStorage:', e);
-        localStorage.removeItem('easy_logikal_cart');
+    const cartToggle = document.getElementById('cart-toggle');
+    const cartClose = document.getElementById('cart-close');
+    const cartDrawer = document.getElementById('cart-drawer');
+    const cartOverlay = document.getElementById('cart-overlay');
+    const checkoutBtn = document.getElementById('checkout-btn');
+
+    // UI Updates
+    updateCartUI();
+
+    // Toggle Cart Drawer
+    if (cartToggle) {
+        cartToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            openCart();
+        });
     }
-    return [];
+
+    if (cartClose) {
+        cartClose.addEventListener('click', closeCart);
+    }
+
+    if (cartOverlay) {
+        cartOverlay.addEventListener('click', closeCart);
+    }
+
+    // Checkout Logic
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            handleCheckout();
+        });
+    }
+
+    // Esperar a que main.js esté inicializado
+    waitForMainInit();
+});
+
+// Esperar a que main.js haya cargado los productos
+function waitForMainInit() {
+    if (window.easyLogikal?.initialized && window.easyLogikal?.allProducts) {
+        console.log('✅ Cart.js: main.js está listo');
+        return;
+    }
+    
+    // Reintentar cada 100ms hasta que esté listo
+    setTimeout(waitForMainInit, 100);
 }
 
-function saveCart() {
-    // Guardar SOLO datos mínimos para evitar QuotaExceededError
-    const minimalCart = cart.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        quantity: item.quantity,
-        sku: item.sku
-    }));
-    
-    try {
-        localStorage.setItem('easy_logikal_cart', JSON.stringify(minimalCart));
-        console.log('💾 Carrito guardado (dato mínimo)');
-    } catch (e) {
-        console.error('❌ Error guardando carrito:', e);
-        if (e.name === 'QuotaExceededError') {
-            alert('Storage lleno. Limpiando...');
-            localStorage.clear();
-            localStorage.setItem('easy_logikal_cart', JSON.stringify(minimalCart));
-        }
+function injectCartDrawer() {
+    if (document.getElementById('cart-drawer')) return;
+
+    const drawerHTML = `
+        <div class="cart-drawer" id="cart-drawer">
+            <div class="cart-drawer-header">
+                <h2>Tu Pedido</h2>
+                <button id="cart-close">&times;</button>
+            </div>
+            
+            <div id="cart-view-container" class="cart-view-active">
+                <div class="cart-items" id="cart-items">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+
+            <div id="checkout-view-container" style="display: none; overflow-y: auto; height: calc(100% - 70px); padding: 2rem;">
+                <button class="btn btn-sm btn-outline mb-2" onclick="showCartView()">← Volver al carrito</button>
+                
+                <div class="checkout-section">
+                    <h3>Detalles de Facturación</h3>
+                    <div class="checkout-form-grid">
+                        <div class="form-group full-width">
+                            <label>Email *</label>
+                            <input type="email" id="f-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre *</label>
+                            <input type="text" id="f-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido *</label>
+                            <input type="text" id="f-lname" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>País/Región *</label>
+                            <select id="f-country">
+                                <option value="MX">México</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Dirección De La Calle *</label>
+                            <input type="text" id="f-address" placeholder="Número de casa y nombre de la calle" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Colonia, Apartamento, Habitación, Escalera, Etc. (Opcional)</label>
+                            <input type="text" id="f-extra">
+                        </div>
+                        <div class="form-group">
+                            <label>Localidad / Ciudad *</label>
+                            <input type="text" id="f-city" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Región / Estado *</label>
+                            <input type="text" id="f-state" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Código Postal *</label>
+                            <input type="text" id="f-zip" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono *</label>
+                            <input type="tel" id="f-phone" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="f-newsletter">
+                            Sign Me Up To Receive Email Updates And News (Opcional)
+                        </label>
+                    </div>
+
+                    <div class="mt-2">
+                        <label class="checkbox-item" onclick="toggleShippingAddress()">
+                            <input type="checkbox" id="f-diff-address">
+                            ¿Enviar A Una Dirección Diferente?
+                        </label>
+                    </div>
+
+                    <div id="shipping-address-fields" style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 1px dashed var(--border);">
+                        <h3>Dirección de Envío</h3>
+                        <div class="checkout-form-grid">
+                            <div class="form-group">
+                                <label>Nombre *</label>
+                                <input type="text" id="s-name">
+                            </div>
+                            <div class="form-group">
+                                <label>Apellido *</label>
+                                <input type="text" id="s-lname">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>País/Región *</label>
+                                <select id="s-country">
+                                    <option value="MX">México</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Dirección De La Calle *</label>
+                                <input type="text" id="s-address">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Colonia, Apartamento, Habitación, Escalera, Etc. (Opcional)</label>
+                                <input type="text" id="s-extra">
+                            </div>
+                            <div class="form-group">
+                                <label>Localidad / Ciudad *</label>
+                                <input type="text" id="s-city">
+                            </div>
+                            <div class="form-group">
+                                <label>Región / Estado *</label>
+                                <input type="text" id="s-state">
+                            </div>
+                            <div class="form-group">
+                                <label>Código Postal *</label>
+                                <input type="text" id="s-zip">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width mt-2">
+                        <label>Indicaciones Del Pedido (Opcional)</label>
+                        <textarea id="f-notes" rows="3" placeholder="Notas sobre tu pedido, ej. notas especiales para la entrega."></textarea>
+                    </div>
+                </div>
+
+                <div class="order-summary-box">
+                    <h3>Tu Pedido</h3>
+                    <div id="checkout-items-list"></div>
+                    <div id="checkout-totals"></div>
+                    
+                    <div class="payment-methods">
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="paypal" checked>
+                            <span>PayPal <strong>PayPal</strong></span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="mercadopago_cash">
+                            <span>Pagos Sin Tarjeta De Mercado Pago</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="mercadopago">
+                            <span>Mercado Pago <strong>Mercado Pago</strong></span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="card">
+                            <span>Tarjeta De Crédito O Débito</span>
+                        </label>
+                    </div>
+
+                    <p class="legal-text mt-2" style="font-size: 0.8rem; color: var(--text-muted);">
+                        Tus datos personales se utilizarán para procesar tu pedido, mejorar tu experiencia en esta web y otros propósitos descritos en nuestra política de privacidad.
+                    </p>
+                    
+                    <label class="checkbox-item mt-1" style="font-size: 0.85rem;">
+                        <input type="checkbox" id="f-terms" required>
+                        He Leído Y Estoy De Acuerdo Con Los Términos Y Condiciones Del Sitio Web *
+                    </label>
+
+                    <button class="btn btn-primary w-100 mt-2" id="place-order-btn">REALIZAR PEDIDO</button>
+                </div>
+            </div>
+        </div>
+        <div class="cart-overlay" id="cart-overlay"></div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', drawerHTML);
+}
+
+function showCartView() {
+    document.getElementById('cart-view-container').style.display = 'block';
+    document.getElementById('checkout-view-container').style.display = 'none';
+}
+
+function showCheckoutView() {
+    if (cart.length === 0) {
+        alert('Tu carrito está vacío.');
+        return;
     }
+    document.getElementById('cart-view-container').style.display = 'none';
+    document.getElementById('checkout-view-container').style.display = 'block';
+    updateCheckoutUI();
+}
+
+function showFullCartView() {
+    // This could redirect to a dedicated page, or show a large modal
+    // For now, we keep the drawer view but could expand it
+    openCart();
+}
+
+function toggleShippingAddress() {
+    const fields = document.getElementById('shipping-address-fields');
+    fields.style.display = document.getElementById('f-diff-address').checked ? 'block' : 'none';
+}
+
+function updateCheckoutUI() {
+    const list = document.getElementById('checkout-items-list');
+    const totals = document.getElementById('checkout-totals');
+    
+    let subtotal = 0;
+    list.innerHTML = cart.map(item => {
+        const itemTotal = item.price * item.quantity;
+        subtotal += itemTotal;
+        return `
+            <div class="summary-row">
+                <span>${item.name} × ${item.quantity}</span>
+                <span>$${itemTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+            </div>
+        `;
+    }).join('');
+
+    const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+    const shippingCost = (subtotal >= 499 || totalItems >= 2) ? 0 : 100;
+    const total = subtotal + shippingCost;
+
+    totals.innerHTML = `
+        <div class="summary-row">
+            <span>Subtotal</span>
+            <span>$${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+        </div>
+        <div class="summary-row">
+            <div>
+                <span>Envío</span>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">
+                    ${shippingCost === 0 ? 'Envío Gratuito En 2 Productos O Más' : 'Envío Estándar: $100.00'}
+                </p>
+            </div>
+            <span>${shippingCost === 0 ? 'GRATIS' : '$100.00'}</span>
+        </div>
+        <div class="summary-row total">
+            <span>Total</span>
+            <span>$${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
+        </div>
+    `;
 }
 
 function openCart() {
-    console.log('📂 Abriendo carrito...');
     const drawer = document.getElementById('cart-drawer');
     const overlay = document.getElementById('cart-overlay');
     
@@ -70,9 +306,8 @@ function openCart() {
         drawer.classList.add('open');
         overlay.classList.add('visible');
         document.body.style.overflow = 'hidden';
-        console.log('✅ Carrito abierto');
     } else {
-        console.log('⚠️ Cart drawer no encontrado, inyectando...');
+        // If elements are missing for some reason, re-inject and try again
         injectCartDrawer();
         const newDrawer = document.getElementById('cart-drawer');
         const newOverlay = document.getElementById('cart-overlay');
@@ -94,22 +329,139 @@ function closeCart() {
     document.body.style.overflow = 'auto';
 }
 
-function updateCartUI() {
-    console.log('🔄 Actualizando UI del carrito...');
-    const cartItemsContainer = document.getElementById('cart-items');
-    const cartCountElements = document.querySelectorAll('.cart-count');
-
-    if (!cartItemsContainer) {
-        console.log('⚠️ cart-items container no existe');
+function addToCart(productId) {
+    console.log(`🛒 Intentando agregar producto ${productId}...`);
+    console.log(`easyLogikal initialized:`, window.easyLogikal?.initialized);
+    console.log(`allProducts available:`, window.easyLogikal?.allProducts?.length);
+    
+    // Esperar a que los productos estén cargados
+    if (!window.easyLogikal?.initialized || !window.easyLogikal?.allProducts) {
+        alert('Los productos aún se están cargando. Por favor espera...');
+        console.warn('❌ Productos no disponibles aún');
+        return;
+    }
+    
+    // Get product from easyLogikal global object
+    const product = window.easyLogikal.allProducts.find(p => p.id === productId);
+    
+    if (!product) {
+        console.error(`❌ Producto ${productId} no encontrado en:`, window.easyLogikal.allProducts);
+        alert('Producto no encontrado');
         return;
     }
 
+    console.log(`✅ Añadiendo producto: ${product.name}`);
+
+    const existingItem = cart.find(item => item.id === productId);
+
+    if (existingItem) {
+        existingItem.quantity += 1;
+        console.log(`📦 Incrementando cantidad a ${existingItem.quantity}`);
+    } else {
+        cart.push({
+            ...product,
+            quantity: 1
+        });
+        console.log(`🆕 Nuevo producto en carrito`);
+    }
+
+    saveCart();
+    updateCartUI();
+    openCart();
+    console.log(`✅ ${product.name} añadido al carrito`);
+}
+
+function removeFromCart(productId) {
+    cart = cart.filter(item => item.id !== productId);
+    saveCart();
+    updateCartUI();
+}
+
+function updateQuantity(productId, delta) {
+    const item = cart.find(item => item.id === productId);
+    if (item) {
+        item.quantity += delta;
+        if (item.quantity <= 0) {
+            removeFromCart(productId);
+        } else {
+            saveCart();
+            updateCartUI();
+        }
+    }
+}
+
+// --- DETAIL PAGE FUNCTIONS ---
+window.updateDetailQty = (delta) => {
+    const input = document.getElementById('detail-qty');
+    if (!input) return;
+    
+    let currentQty = parseInt(input.value) || 1;
+    const newQty = currentQty + delta;
+    
+    if (newQty >= 1) {
+        input.value = newQty;
+    }
+};
+
+window.addToCartWithQty = (productId) => {
+    console.log(`🛒 Agregando ${document.getElementById('detail-qty')?.value || 1} unidades del producto ${productId}...`);
+    
+    // Verificar que los productos estén cargados
+    if (!window.easyLogikal?.initialized || !window.easyLogikal?.allProducts) {
+        alert('Los productos aún se están cargando. Por favor espera...');
+        console.warn('❌ Productos no disponibles aún');
+        return;
+    }
+    
+    // Get product
+    const product = window.easyLogikal.allProducts.find(p => p.id === productId);
+    if (!product) {
+        console.error(`❌ Producto ${productId} no encontrado`);
+        alert('Producto no encontrado');
+        return;
+    }
+
+    // Get quantity from input
+    const qtyInput = document.getElementById('detail-qty');
+    const quantity = Math.max(1, parseInt(qtyInput?.value) || 1);
+
+    console.log(`✅ Añadiendo ${quantity} × ${product.name}`);
+
+    // Add to cart with quantity
+    let existingItem = cart.find(item => item.id === productId);
+
+    if (existingItem) {
+        existingItem.quantity += quantity;
+        console.log(`📦 Incrementando a ${existingItem.quantity} unidades`);
+    } else {
+        cart.push({
+            ...product,
+            quantity: quantity
+        });
+        console.log(`🆕 ${quantity} unidades agregadas`);
+    }
+
+    saveCart();
+    updateCartUI();
+    openCart();
+    console.log(`✅ ${quantity}× ${product.name} agregado al carrito`);
+};
+
+function saveCart() {
+    localStorage.setItem('easy_logikal_cart', JSON.stringify(cart));
+}
+
+function updateCartUI() {
+    const cartItemsContainer = document.getElementById('cart-items');
+    const cartCountElements = document.querySelectorAll('.cart-count');
+
+    if (!cartItemsContainer) return;
+
     // Update Counts
     const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
-    console.log(`📊 Total items: ${totalItems}`);
     cartCountElements.forEach(el => el.textContent = totalItems);
 
-    // Empty Cart State
+    // Empty Cart State - Mercado Libre Style
     if (cart.length === 0) {
         cartItemsContainer.innerHTML = `
             <div class="empty-cart-meli">
@@ -166,308 +518,79 @@ function updateCartUI() {
     `;
 }
 
-// ============================================================================
-// PUBLIC CART FUNCTIONS (Available for onclick handlers)
-// ============================================================================
-window.addToCart = function(productId) {
-    console.log(`🛒 Intentando agregar producto ${productId}...`);
-    console.log(`✓ easyLogikal inicializado:`, window.easyLogikal?.initialized);
-    console.log(`✓ Productos disponibles:`, window.easyLogikal?.allProducts?.length);
-    
-    if (!window.easyLogikal?.initialized || !window.easyLogikal?.allProducts) {
-        alert('Los productos aún se están cargando. Por favor espera un momento...');
-        console.warn('❌ Productos no disponibles');
-        return;
-    }
-    
-    const product = window.easyLogikal.allProducts.find(p => p.id === productId);
-    if (!product) {
-        console.error(`❌ Producto ${productId} no encontrado`);
-        alert('Producto no encontrado');
-        return;
-    }
-
-    console.log(`✅ Encontrado: ${product.name}`);
-
-    const existingItem = cart.find(item => item.id === productId);
-    if (existingItem) {
-        existingItem.quantity += 1;
-        console.log(`📦 Cantidad actualizada a ${existingItem.quantity}`);
-    } else {
-        // Guardar SOLO datos mínimos
-        cart.push({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            image: product.image,
-            sku: product.sku,
-            quantity: 1
-        });
-        console.log(`🆕 Producto agregado`);
-    }
-
-    saveCart();
-    updateCartUI();
-    openCart();
-    alert(`✅ ${product.name} añadido al carrito`);
-};
-
-window.updateDetailQty = function(delta) {
-    const input = document.getElementById('detail-qty');
-    if (!input) {
-        console.warn('⚠️ detail-qty input no encontrado');
-        return;
-    }
-    
-    let currentQty = parseInt(input.value) || 1;
-    const newQty = currentQty + delta;
-    
-    if (newQty >= 1) {
-        input.value = newQty;
-        console.log(`✏️ Cantidad: ${newQty}`);
-    }
-};
-
-window.addToCartWithQty = function(productId) {
-    console.log(`🛒 Agregando con cantidad - Producto ${productId}...`);
-    
-    if (!window.easyLogikal?.initialized || !window.easyLogikal?.allProducts) {
-        alert('Los productos aún se están cargando. Por favor espera...');
-        return;
-    }
-    
-    const product = window.easyLogikal.allProducts.find(p => p.id === productId);
-    if (!product) {
-        console.error(`❌ Producto ${productId} no encontrado`);
-        alert('Producto no encontrado');
-        return;
-    }
-
-    const qtyInput = document.getElementById('detail-qty');
-    const quantity = Math.max(1, parseInt(qtyInput?.value) || 1);
-
-    console.log(`✅ Añadiendo ${quantity}× ${product.name}`);
-
-    let existingItem = cart.find(item => item.id === productId);
-    if (existingItem) {
-        existingItem.quantity += quantity;
-    } else {
-        // Guardar SOLO datos mínimos
-        cart.push({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            image: product.image,
-            sku: product.sku,
-            quantity: quantity
-        });
-    }
-
-    saveCart();
-    updateCartUI();
-    openCart();
-    alert(`✅ ${quantity}× ${product.name} agregado al carrito`);
-};
-
-window.removeFromCart = function(productId) {
-    console.log(`🗑️ Removiendo producto ${productId}...`);
-    cart = cart.filter(item => item.id !== productId);
-    saveCart();
-    updateCartUI();
-};
-
-window.updateQuantity = function(productId, delta) {
-    const item = cart.find(item => item.id === productId);
-    if (item) {
-        item.quantity += delta;
-        if (item.quantity <= 0) {
-            removeFromCart(productId);
-        } else {
-            saveCart();
-            updateCartUI();
-        }
-    }
-};
-
-window.showCartView = function() {
-    document.getElementById('cart-view-container').style.display = 'block';
-    document.getElementById('checkout-view-container').style.display = 'none';
-};
-
-window.showCheckoutView = function() {
-    if (cart.length === 0) {
-        alert('Tu carrito está vacío.');
-        return;
-    }
-    document.getElementById('cart-view-container').style.display = 'none';
-    document.getElementById('checkout-view-container').style.display = 'block';
-    updateCheckoutUI();
-};
-
-window.showFullCartView = function() {
-    openCart();
-};
-
-window.toggleShippingAddress = function() {
-    const fields = document.getElementById('shipping-address-fields');
-    fields.style.display = document.getElementById('f-diff-address').checked ? 'block' : 'none';
-};
-
-// ============================================================================
-// CHECKOUT FUNCTIONS
-// ============================================================================
-function updateCheckoutUI() {
-    const list = document.getElementById('checkout-items-list');
-    const totals = document.getElementById('checkout-totals');
-    
-    let subtotal = 0;
-    list.innerHTML = cart.map(item => {
-        const itemTotal = item.price * item.quantity;
-        subtotal += itemTotal;
-        return `
-            <div class="summary-row">
-                <span>${item.name} × ${item.quantity}</span>
-                <span>$${itemTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-            </div>
-        `;
-    }).join('');
-
-    const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
-    const shippingCost = (subtotal >= 499 || totalItems >= 2) ? 0 : 100;
-    const total = subtotal + shippingCost;
-
-    totals.innerHTML = `
-        <div class="summary-row">
-            <span>Subtotal</span>
-            <span>$${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-        </div>
-        <div class="summary-row">
-            <div>
-                <span>Envío</span>
-                <p style="font-size: 0.75rem; color: var(--text-muted);">
-                    ${shippingCost === 0 ? 'Envío Gratuito' : 'Envío: $100.00'}
-                </p>
-            </div>
-            <span>${shippingCost === 0 ? 'GRATIS' : '$100.00'}</span>
-        </div>
-        <div class="summary-row total">
-            <span>Total</span>
-            <span>$${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span>
-        </div>
-    `;
-}
-
-function injectCartDrawer() {
-    if (document.getElementById('cart-drawer')) return;
-
-    const drawerHTML = `
-        <div class="cart-drawer" id="cart-drawer">
-            <div class="cart-drawer-header">
-                <h2>Tu Pedido</h2>
-                <button id="cart-close" onclick="closeCart()">&times;</button>
-            </div>
-            
-            <div id="cart-view-container" class="cart-view-active">
-                <div class="cart-items" id="cart-items">
-                    <!-- Dynamic content -->
-                </div>
-            </div>
-
-            <div id="checkout-view-container" style="display: none; overflow-y: auto; height: calc(100% - 70px); padding: 2rem;">
-                <button class="btn btn-sm btn-outline mb-2" onclick="showCartView()">← Volver al carrito</button>
-                <div class="checkout-section">
-                    <h3>Detalles de Facturación</h3>
-                    <div class="checkout-form-grid">
-                        <div class="form-group full-width">
-                            <label>Email *</label>
-                            <input type="email" id="f-email" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Nombre *</label>
-                            <input type="text" id="f-name" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Apellido *</label>
-                            <input type="text" id="f-lname" required>
-                        </div>
-                        <div class="form-group full-width">
-                            <label>País/Región *</label>
-                            <select id="f-country">
-                                <option value="MX">México</option>
-                            </select>
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Dirección De La Calle *</label>
-                            <input type="text" id="f-address" required>
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Ciudad *</label>
-                            <input type="text" id="f-city" required>
-                        </div>
-                    </div>
-                </div>
-                <div class="order-summary-box">
-                    <h3>Tu Pedido</h3>
-                    <div id="checkout-items-list"></div>
-                    <div id="checkout-totals"></div>
-                    <button class="btn btn-primary w-100 mt-2">REALIZAR PEDIDO</button>
-                </div>
-            </div>
-        </div>
-        <div class="cart-overlay" id="cart-overlay" onclick="closeCart()"></div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', drawerHTML);
-}
-
-// ============================================================================
-// INITIALIZATION
-// ============================================================================
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Inicializando Cart...');
-    injectCartDrawer();
-
-    const cartToggle = document.getElementById('cart-toggle');
-    const cartClose = document.getElementById('cart-close');
-    const cartOverlay = document.getElementById('cart-overlay');
-    const checkoutBtn = document.getElementById('checkout-btn');
-
-    updateCartUI();
-
-    if (cartToggle) {
-        cartToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            openCart();
-        });
-    }
-
-    if (cartClose) {
-        cartClose.addEventListener('click', closeCart);
-    }
-
-    if (cartOverlay) {
-        cartOverlay.addEventListener('click', closeCart);
-    }
-
-    if (checkoutBtn) {
-        checkoutBtn.addEventListener('click', handleCheckout);
-    }
-
-    waitForMainInit();
-    console.log('✅ Cart inicializado');
-});
-
-function waitForMainInit() {
-    if (window.easyLogikal?.initialized && window.easyLogikal?.allProducts) {
-        console.log('✅ main.js listo, carrito sincronizado');
-        return;
-    }
-    setTimeout(waitForMainInit, 100);
-}
-
 async function handleCheckout() {
     if (cart.length === 0) {
         alert('Tu carrito está vacío.');
         return;
     }
-    alert('Función de checkout en desarrollo');
+
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value || 'card';
+    
+    // Customer Info
+    const custName = document.getElementById('cart-cust-name')?.value;
+    const custEmail = document.getElementById('cart-cust-email')?.value;
+
+    if (!custName || !custEmail) {
+        alert('Por favor, completa tu nombre y correo para procesar la cotización.');
+        return;
+    }
+
+    checkoutBtn.textContent = 'Procesando...';
+    checkoutBtn.disabled = true;
+
+    // Tax Calculation
+    const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const tax = subtotal * 0.16;
+    const total = subtotal + tax;
+
+    // 1. WhatsApp Quote (Always good to have as backup)
+    // sendWhatsAppQuote();
+
+    try {
+        // 2. Persist Order in Supabase
+        const { data, error } = await supabaseClient
+            .from('orders')
+            .insert([{
+                customer_name: custName,
+                customer_email: custEmail,
+                items: cart,
+                total: total,
+                status: 'pending',
+                payment_method: paymentMethod
+            }]);
+
+        if (error) throw error;
+
+        // Simulation of redirect/success
+        console.log(`Iniciando proceso de pago (${paymentMethod})...`);
+        
+        setTimeout(() => {
+            if (paymentMethod === 'transfer') {
+                alert('¡Pedido confirmado! Se han generado los datos para tu transferencia bancaria. Revisa tu correo.');
+            } else {
+                alert('Redirigiendo a pasarela de pago segura (Stripe/PayPal)...');
+                alert('¡Pago completado con éxito!');
+            }
+            
+            generateInvoice(cart, total);
+            cart = [];
+            saveCart();
+            updateCartUI();
+            closeCart();
+            checkoutBtn.textContent = 'Proceder al Pago';
+            checkoutBtn.disabled = false;
+        }, 2000);
+
+    } catch (error) {
+        console.error('Error al procesar pedido:', error);
+        alert('Hubo un problema al procesar tu pedido. Por favor intenta de nuevo.');
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = 'Proceder al Pago';
+    }
+}
+
+function generateInvoice(items, total) {
+    console.log('Generando facturación electrónica (Simulación CFDI)...');
+    // En producción, aquí se llamaría a un servicio como Facturama o Quaderno
 }
