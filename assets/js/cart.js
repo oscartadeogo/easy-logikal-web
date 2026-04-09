@@ -47,7 +47,21 @@ document.addEventListener('DOMContentLoaded', () => {
             handleCheckout();
         });
     }
+
+    // Esperar a que main.js esté inicializado
+    waitForMainInit();
 });
+
+// Esperar a que main.js haya cargado los productos
+function waitForMainInit() {
+    if (window.easyLogikal?.initialized && window.easyLogikal?.allProducts) {
+        console.log('✅ Cart.js: main.js está listo');
+        return;
+    }
+    
+    // Reintentar cada 100ms hasta que esté listo
+    setTimeout(waitForMainInit, 100);
+}
 
 function injectCartDrawer() {
     if (document.getElementById('cart-drawer')) return;
@@ -316,10 +330,23 @@ function closeCart() {
 }
 
 function addToCart(productId) {
+    console.log(`🛒 Intentando agregar producto ${productId}...`);
+    console.log(`easyLogikal initialized:`, window.easyLogikal?.initialized);
+    console.log(`allProducts available:`, window.easyLogikal?.allProducts?.length);
+    
+    // Esperar a que los productos estén cargados
+    if (!window.easyLogikal?.initialized || !window.easyLogikal?.allProducts) {
+        alert('Los productos aún se están cargando. Por favor espera...');
+        console.warn('❌ Productos no disponibles aún');
+        return;
+    }
+    
     // Get product from easyLogikal global object
-    const product = window.easyLogikal?.allProducts?.find(p => p.id === productId);
+    const product = window.easyLogikal.allProducts.find(p => p.id === productId);
+    
     if (!product) {
-        console.error(`❌ Producto ${productId} no encontrado`);
+        console.error(`❌ Producto ${productId} no encontrado en:`, window.easyLogikal.allProducts);
+        alert('Producto no encontrado');
         return;
     }
 
