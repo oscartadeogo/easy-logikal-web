@@ -74,15 +74,20 @@ document.addEventListener('DOMContentLoaded', () => {
     waitForMainInit();
 });
 
-// Esperar a que main.js haya cargado los productos
-function waitForMainInit() {
+// Fix 6: Agregar límite de reintentos para evitar bucle infinito
+function waitForMainInit(retries = 0) {
     if (window.easyLogikal?.initialized && window.easyLogikal?.allProducts) {
         console.log('✅ Cart.js: main.js está listo');
         return;
     }
     
+    if (retries > 100) {
+        console.warn('⚠️ Cart: main.js no inicializó después de 10s. Abortando espera.');
+        return;
+    }
+    
     // Reintentar cada 100ms hasta que esté listo
-    setTimeout(waitForMainInit, 100);
+    setTimeout(() => waitForMainInit(retries + 1), 100);
 }
 
 function injectCartDrawer() {
@@ -459,8 +464,13 @@ window.addToCartWithQty = (productId) => {
         existingItem.quantity += quantity;
         console.log(`📦 Incrementando a ${existingItem.quantity} unidades`);
     } else {
+        // Fix 5: Guardar solo campos mínimos para evitar QuotaExceededError
         cart.push({
-            ...product,
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            sku: product.sku || '',
             quantity: quantity
         });
         console.log(`🆕 ${quantity} unidades agregadas`);
@@ -556,7 +566,9 @@ function updateCartUI() {
                 subtotal += itemTotal;
                 return `
                     <div class="compact-cart-item">
-                        <img src="${item.image || 'https://via.placeholder.com/50'}" class="compact-cart-thumb" alt="${item.name}">
+                        <img src="${item.image || 'https://via.placeholder.com/50'}" 
+                             onerror="this.src='https://via.placeholder.com/50'"
+                             class="compact-cart-thumb" alt="${item.name}">
                         <div class="compact-cart-info">
                             <h4>${item.name}</h4>
                             <p>${item.quantity} × $${parseFloat(item.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
@@ -589,9 +601,9 @@ async function handleCheckout() {
     const checkoutBtn = document.getElementById('checkout-btn');
     const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value || 'card';
     
-    // Customer Info
-    const custName = document.getElementById('cart-cust-name')?.value;
-    const custEmail = document.getElementById('cart-cust-email')?.value;
+    // Fix 4: Usar los IDs correctos del formulario del drawer (f-name, f-email)
+    const custName = document.getElementById('f-name')?.value;
+    const custEmail = document.getElementById('f-email')?.value;
 
     if (!custName || !custEmail) {
         alert('Por favor, completa tu nombre y correo para procesar la cotización.');

@@ -13,6 +13,10 @@ window.easyLogikal = {
     initialized: false
 };
 
+// Fix 13: Flag de debug — cambiar a true solo en desarrollo
+const DEBUG = false;
+function log(...args) { if (DEBUG) console.log(...args); }
+
 // ============================================================================
 // INICIALIZACIÓN PRINCIPAL
 // ============================================================================
@@ -94,7 +98,16 @@ async function loadFeaturedProducts() {
     if (!container) return;
     
     try {
-        console.log('⭐ Cargando productos destacados...');
+        // Fix 14: Usar productos ya cargados en memoria en lugar de hacer una segunda query
+        const featured = (window.easyLogikal.allProducts || []).slice(0, 4);
+        if (featured.length > 0) {
+            renderFeatured(featured, container);
+            console.log(`✅ ${featured.length} destacados renderizados desde memoria`);
+            return;
+        }
+        
+        // Fallback: si allProducts aún no está cargado, hacer query
+        console.log('⭐ Cargando productos destacados (fallback query)...');
         
         const { data, error } = await window.easyLogikal.supabase
             .from('products')
@@ -129,10 +142,12 @@ async function loadMarketingBanners() {
         
         const banner = data[0];
         if (banner && banner.image) {
+            // Fix 1: Escapar banner.title para prevenir XSS
+            const safeTitle = (banner.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             container.innerHTML = `
                 <div class="top-banner" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${banner.image}');">
                     <div class="container text-center py-1">
-                        <p style="color: white; font-weight: 600; font-size: 0.9rem;">${banner.title || ''}</p>
+                        <p style="color: white; font-weight: 600; font-size: 0.9rem;">${safeTitle}</p>
                     </div>
                 </div>
             `;
@@ -151,6 +166,11 @@ function renderFeatured(items, container) {
     const html = items.map(product => createProductCard(product, 'featured')).join('');
     container.innerHTML = html;
     
+    // Fix 15: Re-inicializar hover effects para las tarjetas destacadas
+    if (typeof window.initCardHoverEffects === 'function') {
+        window.initCardHoverEffects();
+    }
+    
     // Refresh animations
     if (window.ScrollTrigger) ScrollTrigger.refresh();
 }
@@ -162,8 +182,8 @@ function renderProducts(productsToRender) {
         return;
     }
     
-    console.log('📍 Container encontrado:', container);
-    console.log('Display actual:', window.getComputedStyle(container).display);
+    log('📍 Container encontrado:', container);
+    log('Display actual:', window.getComputedStyle(container).display);
     
     if (!productsToRender || productsToRender.length === 0) {
         container.innerHTML = `
@@ -180,8 +200,8 @@ function renderProducts(productsToRender) {
     }
     
     const html = productsToRender.map(product => createProductCard(product, 'catalog')).join('');
-    console.log(`📝 Renderizando ${productsToRender.length} productos...`);
-    console.log('🔍 HTML generad:', html.substring(0, 300));
+    log(`📝 Renderizando ${productsToRender.length} productos...`);
+    log('🔍 HTML generad:', html.substring(0, 300));
     
     // LIMPIAR para asegurar nuevos elementos
     container.innerHTML = '';
@@ -189,14 +209,14 @@ function renderProducts(productsToRender) {
     // Insertar HTML lentamente
     container.innerHTML = html;
     
-    console.log(`✅ ${productsToRender.length} tarjetas insertas`);
-    console.log('📊 Total cards en DOM:', document.querySelectorAll('.product-card').length);
-    console.log('🔍 Container HTML inners:', container.innerHTML.substring(0, 200));
+    log(`✅ ${productsToRender.length} tarjetas insertas`);
+    log('📊 Total cards en DOM:', document.querySelectorAll('.product-card').length);
+    log('🔍 Container HTML inners:', container.innerHTML.substring(0, 200));
     
-    // GSAP animations
+    // GSAP animations — Fix 8: limitar al container, no a todas las .product-card del DOM
     if (window.gsap) {
-        console.log('⚡ Aplicando animaciones GSAP...');
-        gsap.from('.product-card', {
+        log('⚡ Aplicando animaciones GSAP...');
+        gsap.from(container.querySelectorAll('.product-card'), {
             scrollTrigger: {
                 trigger: container,
                 start: 'top 90%'
@@ -215,6 +235,11 @@ function renderProducts(productsToRender) {
     if (currentCount) {
         currentCount.textContent = productsToRender.length;
     }
+    
+    // Fix 15: Re-inicializar hover effects para las nuevas tarjetas renderizadas
+    if (typeof window.initCardHoverEffects === 'function') {
+        window.initCardHoverEffects();
+    }
 }
 
 function createProductCard(product, context = 'catalog') {
@@ -227,9 +252,10 @@ function createProductCard(product, context = 'catalog') {
     
     const price = parseFloat(product.price || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 });
     
-    // Detectar si estamos en /pages/ o en raíz
+    // Fix 3: Asegurar que product.id sea numérico para evitar inyección en onclick
+    const safeId = parseInt(product.id, 10);
     const isInPages = window.location.pathname.includes('/pages/');
-    const productLink = isInPages ? `producto.html?id=${product.id}` : `pages/producto.html?id=${product.id}`;
+    const productLink = isInPages ? `producto.html?id=${safeId}` : `pages/producto.html?id=${safeId}`;
     
     return `
         <div class="product-card" data-reveal="up" style="cursor: pointer; display: block;">
@@ -254,7 +280,7 @@ function createProductCard(product, context = 'catalog') {
                     <button class="btn btn-primary btn-sm" onclick="window.location.href='${productLink}'; event.stopPropagation();">
                         Ver Detalle
                     </button>
-                    <button class="btn btn-outline btn-sm" onclick="addToCart(${product.id}); event.stopPropagation(); return false;">
+                    <button class="btn btn-outline btn-sm" onclick="addToCart(${safeId}); event.stopPropagation(); return false;">
                         Añadir al Carrito
                     </button>
                 </div>
@@ -278,6 +304,10 @@ function updateDynamicCategories() {
     const container = document.getElementById('category-filters');
     if (!container || !window.easyLogikal.allProducts) return;
     
+    // Fix 7: Preservar la categoría activa antes de reconstruir el DOM
+    const activeBtn = container.querySelector('.filter-btn.active');
+    const activeCategory = activeBtn ? activeBtn.getAttribute('data-category') : 'all';
+    
     // Obtener todas las categorías únicas de los productos
     const categories = [...new Set(
         (window.easyLogikal.allProducts || [])
@@ -286,7 +316,7 @@ function updateDynamicCategories() {
             .sort()
     )];
     
-    console.log('📂 Categorías dinámicas encontradas:', categories);
+    log('📂 Categorías dinámicas encontradas:', categories);
     
     // Contar productos por categoría
     const counts = { all: window.easyLogikal.allProducts.length };
@@ -296,7 +326,7 @@ function updateDynamicCategories() {
     });
     
     // Generar HTML dinámicamente
-    let html = `<li><button class="filter-btn active" data-category="all">Todos los productos <span class="count">(${counts.all})</span></button></li>`;
+    let html = `<li><button class="filter-btn" data-category="all">Todos los productos <span class="count">(${counts.all})</span></button></li>`;
     
     categories.forEach(cat => {
         html += `<li><button class="filter-btn" data-category="${cat}">${cat} <span class="count">(${counts[cat] || 0})</span></button></li>`;
@@ -314,7 +344,21 @@ function updateDynamicCategories() {
         });
     });
     
-    console.log('✅ Categorías dinámicas actualizadas');
+    // Fix 7: Restaurar el estado activo de la categoría seleccionada
+    let restored = false;
+    container.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-category') === activeCategory) {
+            btn.classList.add('active');
+            restored = true;
+        }
+    });
+    // Si no se restauró (categoría ya no existe), activar "all"
+    if (!restored) {
+        const allBtn = container.querySelector('[data-category="all"]');
+        if (allBtn) allBtn.classList.add('active');
+    }
+    
+    log('✅ Categorías dinámicas actualizadas');
 }
 
 function applyAllFilters() {
@@ -324,12 +368,13 @@ function applyAllFilters() {
     const onlyInStock = getStockFilter();
     const sortBy = getSortBy();
     
-    console.log(`🔍 Aplicando filtros: categoría=${activeCategory}, búsqueda="${searchTerm}", precio<=${maxPrice}, solo stock=${onlyInStock}, ordenar por=${sortBy}`);
+    log(`🔍 Aplicando filtros: categoría=${activeCategory}, búsqueda="${searchTerm}", precio<=${maxPrice}, solo stock=${onlyInStock}, ordenar por=${sortBy}`);
     
     let filtered = (window.easyLogikal.allProducts || []).filter(product => {
         const matchesCategory = activeCategory === 'all' || product.category === activeCategory;
+        // Fix 9: Manejar product.name null/undefined para evitar TypeError
         const matchesSearch = !searchTerm || 
-            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (product.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesPrice = !maxPrice || product.price <= maxPrice;
         const matchesStock = !onlyInStock || (product.stock || 0) > 0;
@@ -512,12 +557,16 @@ function setupSearchSuggestions(searchInput) {
         if (matches.length === 0) {
             suggestionsDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #999;">No hay resultados</div>';
         } else {
-            suggestionsDiv.innerHTML = matches.map(p => `
-                <div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;" onclick="window.location.href='./pages/producto.html?id=${p.id}'">
-                    <strong>${p.name}</strong><br>
-                    <small style="color: #999;">$${(p.price || 0).toLocaleString('es-MX')}</small>
-                </div>
-            `).join('');
+            // Fix 2: Escapar p.name para prevenir XSS en sugerencias de búsqueda
+            suggestionsDiv.innerHTML = matches.map(p => {
+                const safeName = (p.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return `
+                    <div style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;" onclick="window.location.href='./pages/producto.html?id=${p.id}'">
+                        <strong>${safeName}</strong><br>
+                        <small style="color: #999;">$${(p.price || 0).toLocaleString('es-MX')}</small>
+                    </div>
+                `;
+            }).join('');
         }
         
         suggestionsDiv.style.display = 'block';

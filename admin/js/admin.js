@@ -12,6 +12,8 @@ let adminProducts = [];
 let deletedProducts = [];
 let selectedProductIds = new Set();
 let currentImageResolve = null;
+// Fix 11: Instancia del chart para destruirla antes de recrear
+let salesChartInstance = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Navigation
@@ -265,6 +267,12 @@ function setupExcelEventListeners() {
 }
 
 function exportProductsToExcel() {
+    // Fix 19: Verificar que la librería XLSX esté disponible antes de usarla
+    if (typeof XLSX === 'undefined') {
+        alert('La librería de exportación no está disponible. Verifica que SheetJS esté cargado.');
+        return;
+    }
+    
     if (adminProducts.length === 0) {
         alert('No hay productos para exportar.');
         return;
@@ -866,7 +874,10 @@ function setupProductEventListeners() {
 
     const productForm = document.getElementById('product-form');
     if (productForm) {
-        productForm.addEventListener('submit', async (e) => {
+        // Fix 12: Clonar el formulario para eliminar listeners previos y evitar duplicados
+        const newForm = productForm.cloneNode(true);
+        productForm.parentNode.replaceChild(newForm, productForm);
+        newForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('edit-id').value;
             
@@ -1039,6 +1050,13 @@ function renderLowStockAlerts(items) {
 function renderSalesChart(orders) {
     const ctx = document.getElementById('salesChart');
     if (!ctx) return;
+    
+    // Fix 11: Destruir el chart anterior para evitar "Canvas is already in use" y memory leaks
+    if (salesChartInstance) {
+        salesChartInstance.destroy();
+        salesChartInstance = null;
+    }
+    
     const labels = [];
     const data = [];
     for (let i = 6; i >= 0; i--) {
@@ -1048,7 +1066,7 @@ function renderSalesChart(orders) {
         const dayTotal = orders.filter(o => new Date(o.created_at).toDateString() === date.toDateString()).reduce((sum, o) => sum + (o.total || 0), 0);
         data.push(dayTotal);
     }
-    new Chart(ctx, {
+    salesChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels,

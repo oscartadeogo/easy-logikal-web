@@ -6,6 +6,10 @@
 // Configuración real de Supabase para Easy Logikal
 const SUPABASE_URL = 'https://xvocbfonusnerczjhdzh.supabase.co'; 
 
+// NOTA DE SEGURIDAD: Esta es la clave pública (anon) de Supabase.
+// Es seguro exponerla en el frontend SOLO si las políticas RLS (Row Level Security)
+// están correctamente configuradas en el dashboard de Supabase.
+// NUNCA exponer la service_role key aquí.
 const SUPABASE_ANON_KEY = 'sb_publishable_Bncn5FfPRPyRj8BDjjXOFQ_IRqFxsPZ';
 
 // Initialize Supabase Client

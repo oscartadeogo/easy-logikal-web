@@ -46,16 +46,24 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Optimized Will-Change: Only on elements that actually animate */
-.product-card, .category-card, .btn, .nav-link, .modal-content, [data-reveal] {
-    will-change: transform, opacity;
+/* Fix 16: will-change solo en hover/focus, no permanentemente en todos los elementos
+   Aplicar globalmente consume memoria GPU innecesariamente */
+.product-card:hover,
+.category-card:hover,
+.btn:hover {
+    will-change: transform;
+}
+
+/* backface-visibility y perspective solo en elementos que realmente animan */
+.modal-content {
     backface-visibility: hidden;
     perspective: 1000px;
 }
 
-/* Layout Containment for better performance during animations */
+/* Fix 17: Usar contain: layout style en lugar de contain: content
+   contain: content puede romper position: fixed de elementos hijos (header, WhatsApp btn) */
 .section, .container, .product-grid, .categories-grid {
-    contain: content;
+    contain: layout style;
 }
 
 /* Media Query for Reduced Motion */

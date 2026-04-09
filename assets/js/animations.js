@@ -136,6 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Fix 15: Exponer initCardHoverEffects globalmente para que main.js la llame
+    // después de renderizar tarjetas dinámicas
+    window.initCardHoverEffects = initCardHoverEffects;
+
     // ─── Parallax (selective & light) ─────────────────────────────────────────
     document.querySelectorAll('[data-parallax]').forEach(item => {
         const speed = parseFloat(item.getAttribute('data-parallax')) || 0.1;
