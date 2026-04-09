@@ -590,23 +590,6 @@ function showError(message) {
 // ============================================================================
 // CARRITO
 // ============================================================================
-function addToCart(productId) {
-    const product = (window.easyLogikal.allProducts || []).find(p => p.id === productId);
-    if (!product) {
-        alert('Producto no encontrado');
-        return;
-    }
-    
-    console.log(`🛒 Añadiendo a carrito:`, product.name);
-    
-    if (typeof window.cart !== 'undefined' && typeof window.cart.add === 'function') {
-        window.cart.add(product);
-    } else {
-        // Fallback: guardar en localStorage
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        cart.push(product);
-        localStorage.setItem('cart', JSON.stringify(cart));
-    }
-    
-    alert(`${product.name} añadido al carrito`);
-}
+// Cart functionality is handled by cart.js
+// The addToCart function is defined there to ensure proper product lookup
+// from window.easyLogikal.allProducts

@@ -316,27 +316,32 @@ function closeCart() {
 }
 
 function addToCart(productId) {
-    // Note: products might be loaded from Supabase or mock
-    // For now, we fetch the product from the current view or mock data if needed
-    // In a real app, you'd fetch by ID from the state
-    
-    const product = window.allProducts?.find(p => p.id === productId);
-    if (!product) return;
+    // Get product from easyLogikal global object
+    const product = window.easyLogikal?.allProducts?.find(p => p.id === productId);
+    if (!product) {
+        console.error(`❌ Producto ${productId} no encontrado`);
+        return;
+    }
+
+    console.log(`✅ Añadiendo producto: ${product.name}`);
 
     const existingItem = cart.find(item => item.id === productId);
 
     if (existingItem) {
         existingItem.quantity += 1;
+        console.log(`📦 Incrementando cantidad a ${existingItem.quantity}`);
     } else {
         cart.push({
             ...product,
             quantity: 1
         });
+        console.log(`🆕 Nuevo producto en carrito`);
     }
 
     saveCart();
     updateCartUI();
     openCart();
+    alert(`✅ ${product.name} añadido al carrito`);
 }
 
 function removeFromCart(productId) {
