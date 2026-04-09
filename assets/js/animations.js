@@ -1,93 +1,88 @@
 /* 
-   Optimized Animations System v2
+   Optimized Animations System v3 – Professional
    Easy Logikal Comercialización
+   Easings: expo.out / power3.out | Stagger coordinado | Hover micro-interactions
 */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Performance: Pause GSAP/ScrollTrigger on low-end or background
+    // Respect prefers-reduced-motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
     // Register GSAP Plugins
     gsap.registerPlugin(ScrollTrigger);
 
-    // Global GSAP Defaults for Performance
+    // Global GSAP Defaults – refined easings
     gsap.defaults({
-        ease: "power2.out",
-        duration: 0.6,
-        force3D: true // Force GPU acceleration
+        ease: "expo.out",
+        duration: 0.7,
+        force3D: true
     });
 
-    // 2. Entrance Animations with requestAnimationFrame approach
+    // Kick off all animations after first paint
     requestAnimationFrame(() => {
         startEntranceAnimations();
         initScrollReveals();
         initImageReveals();
+        initCardHoverEffects();
     });
 
+    // ─── Hero Entrance ────────────────────────────────────────────────────────
     function startEntranceAnimations() {
         if (!document.querySelector('.hero-title')) return;
 
         const heroTl = gsap.timeline({
             defaults: { ease: "expo.out" }
         });
-        
-        heroTl.fromTo('.hero-title', 
-            { y: 60, opacity: 0 },
-            { y: 0, opacity: 1, duration: 1.2 }
-        )
-        .fromTo('.hero-description', 
-            { y: 30, opacity: 0 },
-            { y: 0, opacity: 1, duration: 1 }, 
-            "-=0.9"
-        )
-        .fromTo('.hero-btns .btn', 
-            { y: 20, opacity: 0 },
-            { y: 0, opacity: 1, stagger: 0.15, duration: 0.8 }, 
-            "-=0.7"
-        );
+
+        heroTl
+            .fromTo('.hero-title',
+                { y: 70, opacity: 0 },
+                { y: 0, opacity: 1, duration: 1.3 }
+            )
+            .fromTo('.hero-description',
+                { y: 35, opacity: 0 },
+                { y: 0, opacity: 1, duration: 1.1 },
+                "-=1.0"
+            )
+            .fromTo('.hero-btns .btn',
+                { y: 25, opacity: 0 },
+                { y: 0, opacity: 1, stagger: 0.18, duration: 0.9 },
+                "-=0.8"
+            );
     }
 
-    // 3. Smooth Header Scroll (Throttled/Optimized)
+    // ─── Header Scroll (CSS-class based, no constant GSAP updates) ────────────
     const header = document.querySelector('.header');
     if (header) {
         ScrollTrigger.create({
             start: 'top -100',
             onUpdate: (self) => {
-                // Use CSS classes instead of constant GSAP updates for header visibility
                 if (self.direction === 1 && self.scroll() > 200) {
                     header.classList.add('header-hidden');
                 } else {
                     header.classList.remove('header-hidden');
                 }
-                
-                if (self.scroll() > 50) {
-                    header.classList.add('scrolled');
-                } else {
-                    header.classList.remove('scrolled');
-                }
+                header.classList.toggle('scrolled', self.scroll() > 50);
             }
         });
     }
 
-    // 4. Scroll Reveal Animations (Batch Optimized)
+    // ─── Scroll Reveal – stagger coordinado ───────────────────────────────────
     function initScrollReveals() {
         const revealItems = document.querySelectorAll('[data-reveal]');
-        
-        // Use batching for better performance on multiple items
+        if (!revealItems.length) return;
+
         ScrollTrigger.batch(revealItems, {
             onEnter: batch => {
                 gsap.to(batch, {
                     opacity: 1,
                     y: 0,
                     x: 0,
-                    stagger: 0.1,
-                    duration: 0.8,
-                    ease: "power2.out",
-                    onStart: () => {
-                        batch.forEach(el => el.classList.add('active'));
-                    },
-                    // Remove clearProps to avoid sudden reset jumps
+                    stagger: { amount: 0.4, from: "start" },
+                    duration: 0.9,
+                    ease: "power3.out",
+                    onStart: () => batch.forEach(el => el.classList.add('active')),
                     overwrite: true
                 });
             },
@@ -96,12 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 5. Image Reveal Interaction (GPU Optimized)
+    // ─── Image Reveal (GPU optimized) ─────────────────────────────────────────
     function initImageReveals() {
         const imgWrappers = document.querySelectorAll('.image-wrapper:not(.no-reveal)');
         imgWrappers.forEach(wrapper => {
             if (wrapper.querySelector('.reveal-img-overlay')) return;
-            
+
             const overlay = document.createElement('div');
             overlay.className = 'reveal-img-overlay';
             wrapper.style.position = 'relative';
@@ -117,20 +112,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     toggleActions: "play none none none"
                 },
                 xPercent: 101,
-                duration: 1,
-                ease: "power2.inOut",
-                onComplete: () => {
-                    // Optional: remove overlay from DOM to save memory
-                    // overlay.remove(); 
-                }
+                duration: 1.1,
+                ease: "power3.inOut"
             });
         });
     }
 
-    // 6. Global Parallax Effect (Selective & Light)
-    const parallaxItems = document.querySelectorAll('[data-parallax]');
-    parallaxItems.forEach(item => {
-        const speed = item.getAttribute('data-parallax') || 0.1;
+    // ─── Card Hover Micro-interactions ────────────────────────────────────────
+    function initCardHoverEffects() {
+        const cards = document.querySelectorAll('.product-card, .category-card');
+        cards.forEach(card => {
+            const img = card.querySelector('img');
+
+            card.addEventListener('mouseenter', () => {
+                gsap.to(card, { y: -8, duration: 0.3, ease: 'power3.out', overwrite: 'auto' });
+                if (img) gsap.to(img, { scale: 1.08, duration: 0.4, ease: 'power2.out', overwrite: 'auto' });
+            });
+
+            card.addEventListener('mouseleave', () => {
+                gsap.to(card, { y: 0, duration: 0.45, ease: 'expo.out', overwrite: 'auto' });
+                if (img) gsap.to(img, { scale: 1, duration: 0.4, ease: 'power2.out', overwrite: 'auto' });
+            });
+        });
+    }
+
+    // ─── Parallax (selective & light) ─────────────────────────────────────────
+    document.querySelectorAll('[data-parallax]').forEach(item => {
+        const speed = parseFloat(item.getAttribute('data-parallax')) || 0.1;
         gsap.to(item, {
             scrollTrigger: {
                 trigger: item,
@@ -138,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 end: "bottom top",
                 scrub: true
             },
-            y: (i, target) => -ScrollTrigger.maxScroll(window) * speed,
+            y: () => -ScrollTrigger.maxScroll(window) * speed,
             ease: "none"
         });
     });

@@ -220,8 +220,9 @@ function renderProducts(productsToRender) {
 function createProductCard(product, context = 'catalog') {
     // Validar URL de imagen
     let imageUrl = product.image || '';
-    if (!imageUrl || imageUrl.trim() === '' || imageUrl === 'data') {
-        imageUrl = 'https://via.placeholder.com/400?text=' + encodeURIComponent(product.name);
+    if (!imageUrl || imageUrl.trim() === '' || imageUrl === 'data' ||
+        (imageUrl.startsWith('data:') && imageUrl.length < 100)) {
+        imageUrl = 'https://via.placeholder.com/400?text=' + encodeURIComponent(product.name || 'Producto');
     }
     
     const price = parseFloat(product.price || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 });
@@ -243,7 +244,7 @@ function createProductCard(product, context = 'catalog') {
                 <div class="product-meta-small">
                     ${product.sku ? `<span class="sku">SKU: ${product.sku}</span>` : ''}
                     <span class="stock-status ${(product.stock || 0) > 0 ? 'in-stock' : 'out-of-stock'}">
-                        ${(product.stock || 0) > 0 ? 'En Stock' : 'Agotado'}
+                        ${(product.stock || 0) > 0 ? `En Stock: ${product.stock} uds.` : 'Agotado'}
                     </span>
                 </div>
                 <p class="product-price" style="font-size: 1.25rem; font-weight: bold; color: var(--primary, #007bff);">$${price}</p>
