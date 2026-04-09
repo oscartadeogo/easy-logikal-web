@@ -5,6 +5,29 @@
 
 let cart = [];
 
+// Toast Notification System
+function showToast(message, type = 'success', duration = 3000) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    const icons = { success: '✓', error: '✕', info: 'ℹ' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span>${icons[type] || '✓'}</span><span>${message}</span>`;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'toastOut 0.3s ease-out forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+window.showToast = showToast;
+
 // Limpiar localStorage si está lleno
 function initializeCart() {
     try {
@@ -397,7 +420,7 @@ window.addToCart = function(productId) {
     saveCart();
     updateCartUI();
     openCart();
-    console.log(`✅ ${product.name} añadido al carrito`);
+    showToast(`${product.name} agregado al carrito`, 'success');
 };
 
 window.removeFromCart = function(productId) {
@@ -479,7 +502,7 @@ window.addToCartWithQty = (productId) => {
     saveCart();
     updateCartUI();
     openCart();
-    console.log(`✅ ${quantity}× ${product.name} agregado al carrito`);
+    showToast(`${quantity}× ${product.name} agregado al carrito`, 'success');
 };
 
 function saveCart() {

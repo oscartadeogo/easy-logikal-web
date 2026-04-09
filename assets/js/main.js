@@ -26,6 +26,9 @@ async function initializeApp() {
     try {
         console.log('🚀 Inicializando Easy Logikal...');
         
+        // Cargar filtros desde URL antes de cualquier render
+        loadFiltersFromURL();
+        
         // Verificar que Supabase esté disponible
         if (typeof supabaseClient === 'undefined') {
             console.error('❌ supabaseClient no está disponible');
@@ -57,9 +60,25 @@ async function initializeApp() {
 // ============================================================================
 // CARGA DE DATOS
 // ============================================================================
+function showSkeletonLoaders(container, count = 8) {
+    if (!container) return;
+    container.innerHTML = Array(count).fill(`
+        <div class="skeleton-card">
+            <div class="skeleton skeleton-img"></div>
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-text short"></div>
+            <div class="skeleton skeleton-price"></div>
+        </div>
+    `).join('');
+}
+
 async function loadAllProducts() {
     try {
         console.log('📦 Cargando todos los productos...');
+        
+        // Mostrar skeleton loaders mientras carga
+        const container = document.getElementById('product-container');
+        if (container) showSkeletonLoaders(container);
         
         const { data, error } = await window.easyLogikal.supabase
             .from('products')
@@ -76,7 +95,6 @@ async function loadAllProducts() {
         updateDynamicCategories();
         
         // Renderizar en catálogo si existe
-        const container = document.getElementById('product-container');
         if (container) {
             applyAllFilters();
         }
@@ -171,6 +189,9 @@ function renderFeatured(items, container) {
         window.initCardHoverEffects();
     }
     
+    // Refresh wishlist buttons
+    if (typeof window.refreshWishlistButtons === 'function') window.refreshWishlistButtons();
+    
     // Refresh animations
     if (window.ScrollTrigger) ScrollTrigger.refresh();
 }
@@ -240,6 +261,9 @@ function renderProducts(productsToRender) {
     if (typeof window.initCardHoverEffects === 'function') {
         window.initCardHoverEffects();
     }
+    
+    // Refresh wishlist buttons
+    if (typeof window.refreshWishlistButtons === 'function') window.refreshWishlistButtons();
 }
 
 function createProductCard(product, context = 'catalog') {
@@ -262,6 +286,9 @@ function createProductCard(product, context = 'catalog') {
             <div class="product-image" onclick="window.location.href='${productLink}'" style="display: block;">
                 <img src="${imageUrl}" alt="${product.name}" loading="lazy" style="display: block; width: 100%; height: auto;">
                 ${product.badge ? `<span class="product-badge">${product.badge}</span>` : ''}
+                <button class="wishlist-btn" data-product-id="${safeId}" onclick="toggleWishlist(${safeId}, '${(product.name || '').replace(/'/g, "\\'")}'); event.stopPropagation();" aria-label="Agregar a lista de deseos">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                </button>
             </div>
             <div class="product-info" style="display: block;">
                 <span class="product-category">${product.category || 'General'}</span>
@@ -358,6 +385,16 @@ function updateDynamicCategories() {
         if (allBtn) allBtn.classList.add('active');
     }
     
+    // Aplicar filtro de categoría desde URL si está pendiente
+    if (window._pendingCatFilter) {
+        const targetBtn = container.querySelector(`[data-category="${window._pendingCatFilter}"]`);
+        if (targetBtn) {
+            container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            targetBtn.classList.add('active');
+        }
+        window._pendingCatFilter = null;
+    }
+    
     log('✅ Categorías dinámicas actualizadas');
 }
 
@@ -388,6 +425,9 @@ function applyAllFilters() {
     // Renderizar
     renderProducts(filtered);
     updateCategoryCounts();
+    
+    // Sincronizar filtros con URL
+    syncFiltersToURL();
 }
 
 function applySorting(products, sortBy) {
@@ -636,3 +676,110 @@ function showError(message) {
 // Cart functionality is handled by cart.js
 // The addToCart function is defined there to ensure proper product lookup
 // from window.easyLogikal.allProducts
+
+// ============================================================================
+// FILTROS PERSISTENTES EN URL
+// ============================================================================
+function syncFiltersToURL() {
+    const params = new URLSearchParams();
+    const category = getActiveCategory();
+    const search = getSearchTerm();
+    const sort = getSortBy();
+    const stock = getStockFilter();
+    const price = getPriceMax();
+    
+    if (category && category !== 'all') params.set('cat', category);
+    if (search) params.set('q', search);
+    if (sort && sort !== 'newest') params.set('sort', sort);
+    if (stock) params.set('stock', '1');
+    if (price && price < 50000) params.set('price', price);
+    
+    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    history.replaceState(null, '', newUrl);
+}
+
+function loadFiltersFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    
+    const cat = params.get('cat');
+    const q = params.get('q');
+    const sort = params.get('sort');
+    const stock = params.get('stock');
+    const price = params.get('price');
+    
+    if (q) {
+        const searchInput = document.getElementById('product-search');
+        if (searchInput) searchInput.value = q;
+    }
+    if (sort) {
+        const sortSelect = document.getElementById('sort-products');
+        if (sortSelect) sortSelect.value = sort;
+    }
+    if (stock === '1') {
+        const stockOnly = document.getElementById('stock-only');
+        if (stockOnly) stockOnly.checked = true;
+    }
+    if (price) {
+        const priceRange = document.getElementById('price-range');
+        const priceLabel = document.getElementById('price-max-label');
+        if (priceRange) priceRange.value = price;
+        if (priceLabel) priceLabel.textContent = `$${parseInt(price).toLocaleString()}+`;
+    }
+    
+    // Store cat for after categories load
+    if (cat) window._pendingCatFilter = cat;
+}
+
+// ============================================================================
+// BACK TO TOP
+// ============================================================================
+(function() {
+    const btn = document.getElementById('back-to-top');
+    if (!btn) return;
+    window.addEventListener('scroll', () => {
+        btn.classList.toggle('visible', window.scrollY > 400);
+    }, { passive: true });
+    btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+})();
+
+// ============================================================================
+// VIEW TOGGLE (Grid/List)
+// ============================================================================
+(function() {
+    const toggleBtns = document.querySelectorAll('.view-btn');
+    const grid = document.getElementById('product-container');
+    if (!toggleBtns.length || !grid) return;
+    
+    const savedView = localStorage.getItem('el_view') || 'grid';
+    if (savedView === 'list') {
+        grid.classList.add('list-view');
+        toggleBtns.forEach(b => b.classList.toggle('active', b.dataset.view === 'list'));
+    }
+    
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const view = btn.dataset.view;
+            toggleBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            grid.classList.toggle('list-view', view === 'list');
+            localStorage.setItem('el_view', view);
+        });
+    });
+})();
+
+// ============================================================================
+// DARK MODE TOGGLE
+// ============================================================================
+(function() {
+    const toggle = document.getElementById('dark-mode-toggle');
+    if (!toggle) return;
+    
+    const saved = localStorage.getItem('el_theme') || 'light';
+    if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    
+    toggle.addEventListener('click', () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('el_theme', isDark ? 'light' : 'dark');
+    });
+})();

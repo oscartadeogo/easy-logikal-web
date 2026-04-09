@@ -2165,3 +2165,218 @@ img {
     visibility: visible !important;
     display: block !important;
 }
+
+/* ============================================================
+   MEJORAS: Skeleton, Back-to-Top, View Toggle, Toast,
+            Wishlist, Dark Mode
+   ============================================================ */
+
+/* Skeleton Loader */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+.skeleton-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    min-height: 350px;
+}
+.skeleton-img { height: 200px; width: 100%; }
+.skeleton-text { height: 16px; margin: 12px; width: 70%; }
+.skeleton-text.short { width: 40%; }
+.skeleton-price { height: 24px; margin: 12px; width: 50%; }
+
+/* Back to Top Button */
+.back-to-top {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 44px;
+    height: 44px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition-base);
+    z-index: 999;
+    box-shadow: 0 4px 12px rgba(198,40,40,0.3);
+}
+.back-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+}
+.back-to-top:hover {
+    background: var(--primary-hover);
+    transform: translateY(-3px);
+}
+
+/* View Toggle */
+.view-toggle {
+    display: flex;
+    gap: 4px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+}
+.view-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: var(--transition-fast);
+}
+.view-btn.active {
+    background: var(--primary);
+    color: white;
+}
+/* List View */
+.product-grid.list-view {
+    grid-template-columns: 1fr !important;
+}
+.product-grid.list-view .product-card {
+    flex-direction: row !important;
+    min-height: auto !important;
+}
+.product-grid.list-view .product-image {
+    width: 160px !important;
+    height: 160px !important;
+    flex-shrink: 0;
+}
+.product-grid.list-view .product-info {
+    flex: 1;
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+.toast {
+    background: var(--secondary);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: toastIn 0.3s ease-out;
+    pointer-events: auto;
+    min-width: 280px;
+    max-width: 400px;
+}
+.toast.success { border-left: 4px solid #4caf50; }
+.toast.error { border-left: 4px solid var(--primary); }
+.toast.info { border-left: 4px solid #2196f3; }
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes toastOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Wishlist Button */
+.wishlist-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 3;
+    transition: var(--transition-fast);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.wishlist-btn:hover, .wishlist-btn.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+}
+.wishlist-btn svg { pointer-events: none; }
+
+/* Dark Mode Toggle Button */
+.dark-mode-toggle {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-main);
+    transition: var(--transition-fast);
+}
+.dark-mode-toggle:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Dark Mode */
+[data-theme="dark"] {
+    --bg-main: #121212;
+    --bg-secondary: #1E1E1E;
+    --bg-dark: #0A0A0A;
+    --text-main: #E0E0E0;
+    --text-muted: #9E9E9E;
+    --border: #333333;
+    --secondary: #F5F5F5;
+}
+[data-theme="dark"] .header {
+    background-color: rgba(18, 18, 18, 0.95);
+}
+[data-theme="dark"] .product-card {
+    background: #1E1E1E !important;
+    border-color: #333 !important;
+}
+[data-theme="dark"] .filter-box,
+[data-theme="dark"] .catalog-toolbar {
+    background: #1E1E1E;
+    border-color: #333;
+}
+[data-theme="dark"] .cart-drawer {
+    background: #1E1E1E;
+}
+[data-theme="dark"] .wishlist-btn {
+    background: #2a2a2a;
+    border-color: #444;
+}
