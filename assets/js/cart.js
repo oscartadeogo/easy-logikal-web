@@ -4,13 +4,35 @@
  */
 
 let cart = [];
-try {
-    const savedCart = localStorage.getItem('easy_logikal_cart');
-    cart = savedCart ? JSON.parse(savedCart) : [];
-} catch (e) {
-    console.warn('Error loading cart from localStorage:', e);
-    cart = [];
+
+// Limpiar localStorage si está lleno
+function initializeCart() {
+    try {
+        const savedCart = localStorage.getItem('easy_logikal_cart');
+        if (savedCart) {
+            // Si el carrito guardado es muy grande, limpiar
+            if (savedCart.length > 500000) {
+                console.log('🧹 localStorage demasiado grande, limpiando...');
+                localStorage.removeItem('easy_logikal_cart');
+                return [];
+            }
+            return JSON.parse(savedCart);
+        }
+    } catch (e) {
+        console.warn('❌ Error cargando carrito:', e);
+        if (e.name === 'QuotaExceededError') {
+            console.log('🧹 QuotaExceededError detectado, limpiando localStorage...');
+            try {
+                localStorage.clear();
+            } catch (e2) {
+                console.error('No se pudo limpiar localStorage');
+            }
+        }
+    }
+    return [];
 }
+
+cart = initializeCart();
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Inject Cart Drawer if not exists
@@ -451,7 +473,44 @@ window.addToCartWithQty = (productId) => {
 };
 
 function saveCart() {
-    localStorage.setItem('easy_logikal_cart', JSON.stringify(cart));
+    try {
+        // Guardar SOLO datos mínimos para evitar QuotaExceededError
+        const minimalCart = cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.image,
+            quantity: item.quantity,
+            sku: item.sku || ''
+        }));
+        
+        const json = JSON.stringify(minimalCart);
+        console.log(`💾 Guardando carrito (${json.length} bytes)...`);
+        
+        localStorage.setItem('easy_logikal_cart', json);
+        console.log('✅ Carrito guardado');
+    } catch (e) {
+        console.error('❌ Error guardando carrito:', e.name, e.message);
+        if (e.name === 'QuotaExceededError') {
+            console.log('🧹 localStorage lleno, limpiando...');
+            try {
+                localStorage.clear();
+                // Intentar guardar de nuevo
+                const minimalCart = cart.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    image: item.image,
+                    quantity: item.quantity,
+                    sku: item.sku || ''
+                }));
+                localStorage.setItem('easy_logikal_cart', JSON.stringify(minimalCart));
+                console.log('✅ Carrito guardado después de limpiar');
+            } catch (e2) {
+                console.error('❌ No se pudo guardar después de limpiar:', e2.message);
+            }
+        }
+    }
 }
 
 function updateCartUI() {
