@@ -231,12 +231,12 @@ function injectCartDrawer() {
     document.body.insertAdjacentHTML('beforeend', drawerHTML);
 }
 
-function showCartView() {
+window.showCartView = function() {
     document.getElementById('cart-view-container').style.display = 'block';
     document.getElementById('checkout-view-container').style.display = 'none';
-}
+};
 
-function showCheckoutView() {
+window.showCheckoutView = function() {
     if (cart.length === 0) {
         alert('Tu carrito está vacío.');
         return;
@@ -244,18 +244,18 @@ function showCheckoutView() {
     document.getElementById('cart-view-container').style.display = 'none';
     document.getElementById('checkout-view-container').style.display = 'block';
     updateCheckoutUI();
-}
+};
 
-function showFullCartView() {
+window.showFullCartView = function() {
     // This could redirect to a dedicated page, or show a large modal
     // For now, we keep the drawer view but could expand it
     openCart();
 }
 
-function toggleShippingAddress() {
+window.toggleShippingAddress = function() {
     const fields = document.getElementById('shipping-address-fields');
     fields.style.display = document.getElementById('f-diff-address').checked ? 'block' : 'none';
-}
+};
 
 function updateCheckoutUI() {
     const list = document.getElementById('checkout-items-list');
@@ -298,7 +298,7 @@ function updateCheckoutUI() {
     `;
 }
 
-function openCart() {
+window.openCart = function() {
     const drawer = document.getElementById('cart-drawer');
     const overlay = document.getElementById('cart-overlay');
     
@@ -307,7 +307,6 @@ function openCart() {
         overlay.classList.add('visible');
         document.body.style.overflow = 'hidden';
     } else {
-        // If elements are missing for some reason, re-inject and try again
         injectCartDrawer();
         const newDrawer = document.getElementById('cart-drawer');
         const newOverlay = document.getElementById('cart-overlay');
@@ -318,25 +317,24 @@ function openCart() {
             updateCartUI();
         }
     }
-}
+};
 
-function closeCart() {
+window.closeCart = function() {
     const drawer = document.getElementById('cart-drawer');
     const overlay = document.getElementById('cart-overlay');
     
     if (drawer) drawer.classList.remove('open');
     if (overlay) overlay.classList.remove('visible');
     document.body.style.overflow = 'auto';
-}
+};
 
-function addToCart(productId) {
+window.addToCart = function(productId) {
     console.log(`🛒 Intentando agregar producto ${productId}...`);
     console.log(`easyLogikal initialized:`, window.easyLogikal?.initialized);
     console.log(`allProducts available:`, window.easyLogikal?.allProducts?.length);
     
     // Esperar a que los productos estén cargados
     if (!window.easyLogikal?.initialized || !window.easyLogikal?.allProducts) {
-        alert('Los productos aún se están cargando. Por favor espera...');
         console.warn('❌ Productos no disponibles aún');
         return;
     }
@@ -346,38 +344,43 @@ function addToCart(productId) {
     
     if (!product) {
         console.error(`❌ Producto ${productId} no encontrado en:`, window.easyLogikal.allProducts);
-        alert('Producto no encontrado');
         return;
     }
 
-    console.log(`✅ Añadiendo producto: ${product.name}`);
+    console.log(`✅ Encontrado: ${product.name}`);
 
     const existingItem = cart.find(item => item.id === productId);
 
     if (existingItem) {
         existingItem.quantity += 1;
-        console.log(`📦 Incrementando cantidad a ${existingItem.quantity}`);
+        console.log(`📦 Cantidad actualizada a ${existingItem.quantity}`);
     } else {
+        // Guardar SOLO datos mínimos
         cart.push({
-            ...product,
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            sku: product.sku,
             quantity: 1
         });
-        console.log(`🆕 Nuevo producto en carrito`);
+        console.log(`🆕 Producto agregado al carrito`);
     }
 
     saveCart();
     updateCartUI();
     openCart();
     console.log(`✅ ${product.name} añadido al carrito`);
-}
+};
 
-function removeFromCart(productId) {
+window.removeFromCart = function(productId) {
+    console.log(`🗑️ Removiendo producto ${productId}...`);
     cart = cart.filter(item => item.id !== productId);
     saveCart();
     updateCartUI();
-}
+};
 
-function updateQuantity(productId, delta) {
+window.updateQuantity = function(productId, delta) {
     const item = cart.find(item => item.id === productId);
     if (item) {
         item.quantity += delta;
@@ -388,7 +391,7 @@ function updateQuantity(productId, delta) {
             updateCartUI();
         }
     }
-}
+};
 
 // --- DETAIL PAGE FUNCTIONS ---
 window.updateDetailQty = (delta) => {
