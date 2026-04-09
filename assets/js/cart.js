@@ -6,19 +6,59 @@
 
 let cart = [];
 try {
-    const savedCart = localStorage.getItem('easy_logikal_cart');
-    cart = savedCart ? JSON.parse(savedCart) : [];
+    cart = cleanOldCart();
 } catch (e) {
-    console.warn('Error loading cart from localStorage:', e);
+    console.warn('Error loading cart:', e);
     cart = [];
 }
 
 // ============================================================================
 // HELPER FUNCTIONS (MUST BE FIRST)
 // ============================================================================
+
+// Limpiar localStorage antiguo al cargar
+function cleanOldCart() {
+    try {
+        const saved = localStorage.getItem('easy_logikal_cart');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            // Si hay datos antiguos muy grandes, limpiar
+            if (saved.length > 1000000) {
+                console.log('🧹 Limpiando localStorage antiguo (demasiado grande)');
+                localStorage.removeItem('easy_logikal_cart');
+                return [];
+            }
+            return parsed;
+        }
+    } catch (e) {
+        console.warn('Error limpiando localStorage:', e);
+        localStorage.removeItem('easy_logikal_cart');
+    }
+    return [];
+}
+
 function saveCart() {
-    localStorage.setItem('easy_logikal_cart', JSON.stringify(cart));
-    console.log('💾 Carrito guardado en localStorage');
+    // Guardar SOLO datos mínimos para evitar QuotaExceededError
+    const minimalCart = cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+        quantity: item.quantity,
+        sku: item.sku
+    }));
+    
+    try {
+        localStorage.setItem('easy_logikal_cart', JSON.stringify(minimalCart));
+        console.log('💾 Carrito guardado (dato mínimo)');
+    } catch (e) {
+        console.error('❌ Error guardando carrito:', e);
+        if (e.name === 'QuotaExceededError') {
+            alert('Storage lleno. Limpiando...');
+            localStorage.clear();
+            localStorage.setItem('easy_logikal_cart', JSON.stringify(minimalCart));
+        }
+    }
 }
 
 function openCart() {
@@ -154,7 +194,15 @@ window.addToCart = function(productId) {
         existingItem.quantity += 1;
         console.log(`📦 Cantidad actualizada a ${existingItem.quantity}`);
     } else {
-        cart.push({...product, quantity: 1});
+        // Guardar SOLO datos mínimos
+        cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            sku: product.sku,
+            quantity: 1
+        });
         console.log(`🆕 Producto agregado`);
     }
 
@@ -204,7 +252,15 @@ window.addToCartWithQty = function(productId) {
     if (existingItem) {
         existingItem.quantity += quantity;
     } else {
-        cart.push({...product, quantity: quantity});
+        // Guardar SOLO datos mínimos
+        cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            sku: product.sku,
+            quantity: quantity
+        });
     }
 
     saveCart();
