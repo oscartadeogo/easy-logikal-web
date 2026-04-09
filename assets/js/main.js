@@ -54,17 +54,8 @@ async function initializeApp() {
 // CARGA DE DATOS
 // ============================================================================
 async function loadAllProducts() {
-    const container = document.getElementById('product-container');
-    const homeFeatured = document.getElementById('home-featured-products');
-    
-    // Si no estamos en página de productos ni en home, no cargar
-    if (!container && !homeFeatured) {
-        console.log('ℹ️ No hay contenedor de productos en esta página');
-        return;
-    }
-    
     try {
-        console.log('📦 Cargando productos...');
+        console.log('📦 Cargando todos los productos...');
         
         const { data, error } = await window.easyLogikal.supabase
             .from('products')
@@ -81,6 +72,7 @@ async function loadAllProducts() {
         updateDynamicCategories();
         
         // Renderizar en catálogo si existe
+        const container = document.getElementById('product-container');
         if (container) {
             applyAllFilters();
         }
@@ -89,6 +81,7 @@ async function loadAllProducts() {
         
     } catch (error) {
         console.error('❌ Error cargando productos:', error);
+        const container = document.getElementById('product-container');
         if (container) {
             showError('Error al cargar productos. Por favor, intenta de nuevo.');
         }
